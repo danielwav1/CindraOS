@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CindraOS — Independent Debian-based Linux</title>
+<meta name="description" content="CindraOS is an experimental Debian 13 based live Linux with an XFCE desktop and the cindra command line tool.">
+<meta name="theme-color" content="#070809">
+<meta property="og:title" content="CindraOS — Your system. Your way.">
+<meta property="og:description" content="Debian-based live Linux. Source, builds and releases on GitHub.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23e11d35' d='M54 8H22L8 22V42L22 56H54V44H27L20 37V27L27 20H54Z'/%3E%3Crect fill='%23f3f4f6' x='33' y='24' width='15' height='15'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#070809;--bg2:#0c0e11;--p:#111419;--p2:#171a20;--r:#e11d35;--r2:#8f1022;--t:#f3f4f6;--t2:#9298a3;--b:#292d34;--ok:#2fbf71;--warn:#d9a21b;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:calc(64px + env(safe-area-inset-top,0px))}
+body{margin:0;background:var(--bg);color:var(--t);font:16px/1.55 var(--sans);background-image:linear-gradient(var(--b) 1px,transparent 1px),linear-gradient(90deg,var(--b) 1px,transparent 1px);background-size:56px 56px;background-attachment:fixed;background-blend-mode:soft-light;overflow-x:hidden}
+body::after{content:"";position:fixed;inset:0;background:var(--bg);opacity:.93;z-index:-1}
+a{color:inherit}
+.mono,code,pre,.lbl{font-family:var(--mono)}
+.lbl{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--r)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+section{padding:72px 0;border-top:1px solid var(--b)}
+h1{font-size:clamp(2.4rem,8vw,5.2rem);line-height:.98;margin:.3em 0;letter-spacing:-.02em;text-transform:uppercase}
+h2{font-size:clamp(1.5rem,4vw,2.2rem);margin:.2em 0 .4em;letter-spacing:-.01em}
+h3{margin:0 0 .3em;font-size:1rem}
+p{color:var(--t2);margin:.4em 0}
+:focus-visible{outline:2px solid var(--r);outline-offset:2px}
+header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(7,8,9,.94);border-bottom:1px solid var(--b);padding-top:env(safe-area-inset-top,0px)}
+.bar{display:flex;align-items:center;gap:12px;height:56px}
+.logo{font-weight:800;letter-spacing:.14em;text-decoration:none}.logo b{color:var(--r)}
+nav.links{display:flex;gap:2px;margin-left:12px;flex:1;overflow:hidden}
+nav.links a{padding:8px 10px;font:.72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;text-decoration:none;color:var(--t2);border-bottom:2px solid transparent}
+nav.links a:hover{color:var(--t)}nav.links a.on{color:var(--t);border-color:var(--r)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;background:var(--p2);color:var(--t);border:1px solid var(--b);font:600 .78rem var(--mono);letter-spacing:.08em;text-transform:uppercase;text-decoration:none;cursor:pointer;border-radius:2px}
+.btn:hover{border-color:var(--r)}.btn.pri{background:var(--r);border-color:var(--r)}.btn.pri:hover{background:var(--r2)}
+.btn.sm{min-height:36px;padding:0 10px;font-size:.7rem}
+kbd{font:.7rem var(--mono);border:1px solid var(--b);padding:1px 6px;color:var(--t2)}
+#burger{display:none}
+@media(max-width:1000px){nav.links{display:none}#burger{display:inline-flex;margin-left:auto}nav.links.open{display:flex;position:fixed;top:calc(56px + env(safe-area-inset-top,0px));left:0;right:0;bottom:0;flex-direction:column;background:var(--bg);padding:12px 20px;margin:0;overflow:auto}nav.links.open a{padding:16px 0;border-bottom:1px solid var(--b);font-size:.9rem}}
+.hero{padding-top:calc(130px + env(safe-area-inset-top,0px));border:0}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.panel{background:var(--p);border:1px solid var(--b);border-top:1px solid var(--r2);padding:16px;min-width:0}
+.panel>.lbl:first-child{display:block;margin-bottom:10px}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+pre.term{background:var(--bg2);border:1px solid var(--b);margin:0;padding:12px;font-size:.78rem;line-height:1.6;overflow:auto;color:var(--t2);white-space:pre-wrap;word-break:break-word}
+.k{color:var(--r)}.okc{color:var(--ok)}
+.strip{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--b);margin-top:28px;background:var(--p)}
+.strip div{flex:1 1 180px;padding:10px 14px;border-right:1px solid var(--b);font:.78rem var(--mono);color:var(--t2)}.strip b{display:block;color:var(--t);font-weight:600}
+svg text{font:10px var(--mono);fill:var(--t2)}
+.tag{display:inline-block;font:.66rem var(--mono);letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--b);padding:1px 7px;color:var(--t2)}
+.tag.av{color:var(--ok);border-color:var(--ok)}.tag.ex{color:var(--warn);border-color:var(--warn)}.tag.pl{color:var(--t2)}.tag.rq{color:var(--r);border-color:var(--r)}
+.feat{display:flex;gap:12px}.ico{flex:none;width:34px;height:34px;border:1px solid var(--b);display:grid;place-items:center;color:var(--r);font:700 .8rem var(--mono)}
+.tw{overflow-x:auto;border:1px solid var(--b)}table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--b);vertical-align:top}th{font:.68rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t2);background:var(--bg2)}
+td a{color:var(--t)}td a:hover{color:var(--r)}
+.state{padding:14px;color:var(--t2);font:.82rem var(--mono);border:1px dashed var(--b)}
+.skel{height:14px;margin:8px 0;background:linear-gradient(90deg,var(--p2),var(--b),var(--p2));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
+label{display:block;font:.7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--t2);margin:10px 0 4px}
+input,select,textarea{width:100%;background:var(--bg2);color:var(--t);border:1px solid var(--b);padding:10px;font:.85rem var(--mono);border-radius:2px;min-height:40px}
+.step{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--b);background:var(--bg2);margin-bottom:8px}
+.step.off{opacity:.55}.step .n{font:.75rem var(--mono);color:var(--r)}.step .ctl{display:flex;gap:4px;flex-wrap:wrap}.step .sub{font:.7rem var(--mono);color:var(--t2)}
+.step input[type=text]{margin-top:4px}
+.sw{display:flex;align-items:center;gap:8px;margin:0;text-transform:none;letter-spacing:0;font-size:.78rem}.sw input{width:auto;min-height:0}
+#cons{height:220px}#cons.big{height:480px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.row input[type=search],.row input[type=text]{flex:1 1 140px;width:auto}
+#pal{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.7);display:none;align-items:flex-start;justify-content:center;padding:12vh 12px 0}
+#pal.open{display:flex}#pal .box{width:min(620px,100%);background:var(--p);border:1px solid var(--r2);max-height:70vh;display:flex;flex-direction:column}
+#pal ul{list-style:none;margin:0;padding:0;overflow:auto}#pal li{padding:12px 14px;border-top:1px solid var(--b);cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-size:.9rem}
+#pal li[aria-selected=true]{background:var(--p2);box-shadow:inset 2px 0 var(--r)}#pal li span{font:.68rem var(--mono);color:var(--t2);text-transform:uppercase}
+.sr{position:absolute;left:-9999px}
+footer{border-top:1px solid var(--b);padding:32px 0;font:.78rem var(--mono);color:var(--t2)}footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px}
+main{counter-reset:s}section[id]{counter-increment:s}section.hero{counter-increment:none}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;background:repeating-linear-gradient(0deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px)}
+h1,h2,h3{font-family:var(--mono)}h1{font-size:clamp(2rem,8vw,4.6rem);font-weight:800;line-height:1.02}h1::after{content:"_";color:var(--r);animation:bl 1s steps(2) infinite}@keyframes bl{50%{opacity:0}}
+h2{font-size:clamp(1.25rem,3.5vw,1.9rem);text-transform:uppercase;letter-spacing:.04em}h2::before{content:"0" counter(s) " // ";color:var(--r)}
+.lbl,.panel>.lbl:first-child{display:flex;align-items:center;gap:10px}.lbl::before{content:"";width:7px;height:7px;background:var(--r);flex:none}.lbl::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--r2),transparent)}
+.panel{position:relative;border:1px solid var(--b);background:linear-gradient(180deg,rgba(225,29,53,.07),transparent 70px),var(--p);transition:border-color .15s}.panel:hover{border-color:var(--r2)}
+.panel::before,.panel::after{content:"";position:absolute;width:12px;height:12px;pointer-events:none;border:2px solid var(--r)}.panel::before{top:-1px;left:-1px;border-right:0;border-bottom:0}.panel::after{right:-1px;bottom:-1px;border-left:0;border-top:0}
+.btn{border:0;box-shadow:inset 0 0 0 1px var(--b);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}.btn:hover{box-shadow:inset 0 0 0 1px var(--r)}.btn.pri{box-shadow:none}
+.hero{background:radial-gradient(55% 45% at 85% 5%,rgba(225,29,53,.2),transparent 70%),radial-gradient(40% 30% at 0% 60%,rgba(143,16,34,.15),transparent 70%)}
+.hud{display:flex;flex-wrap:wrap;gap:6px 18px;font:.7rem var(--mono);color:var(--t2);letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--b);border-left:2px solid var(--r);background:rgba(17,20,25,.7);margin-bottom:22px}.hud i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px;box-shadow:0 0 8px var(--ok)}
+.strip{border-top:2px solid var(--r)}.strip div b{font-family:var(--mono);margin-top:2px}
+th{border-bottom:1px solid var(--r2)}tbody tr:hover{background:var(--p2)}
+.feat .ico{background:var(--bg2);box-shadow:inset 0 0 0 1px var(--r2)}
+pre.term{border-left:2px solid var(--r)}
+.spin{transform-origin:200px 115px;animation:sp 50s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.cc{display:block;text-decoration:none}.cc:hover h3{color:var(--r)}.rec{border-color:var(--r)!important;box-shadow:0 0 0 1px var(--r)}
+details{border:1px solid var(--b);background:var(--p);margin:8px 0;padding:10px 14px}summary{cursor:pointer;font:600 .85rem var(--mono)}progress{accent-color:var(--r);height:8px}
+.warn{border-left:3px solid var(--warn);padding:8px 12px;background:var(--bg2);color:var(--t);font-size:.85rem}html[data-rm] *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
+@media(max-width:600px){section{padding:48px 0}.step{grid-template-columns:1fr}.btn{width:100%}.acts .btn{flex:1 1 100%}.row .btn{width:auto}}
+</style></head><body>
+<header><div class="wrap bar">
+<a class="logo" href="#overview"><svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true" style="vertical-align:-5px;margin-right:8px"><path fill="#e11d35" d="M54 8H22L8 22V42L22 56H54V44H27L20 37V27L27 20H54Z"/><rect fill="#f3f4f6" x="34" y="26" width="12" height="12"/></svg>CINDRA<b>OS</b></a>
+<nav class="links" id="nav" aria-label="Primary">
+<a href="#overview">Overview</a><a href="#features">Features</a><a href="#downloads">Downloads</a><a href="#guides">Guides</a><a href="#docs">Docs</a><a href="#build">Build Center</a><a href="#development">Development</a><a href="#roadmap">Roadmap</a><a href="#about">About</a>
+<a href="https://github.com/danielwav1/CindraOS" target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav>
+<button class="btn sm" id="palbtn" aria-label="Open command palette">Search <kbd id="kk">Ctrl K</kbd></button>
+<button class="btn sm" id="burger" aria-expanded="false" aria-controls="nav">Menu</button>
+</div></header>
+<main>
+<section class="hero" id="overview"><div class="wrap">
+<div class="hud" aria-hidden="true"><span><i></i>SYS.ONLINE</span><span>BASE debian/trixie</span><span>BUILD 0.3-live</span><span>ARCH amd64</span><span id="clk">—</span></div><div class="lbl">AN INDEPENDENT LINUX PROJECT</div>
+<h1>Your system. <span style="color:var(--r)">Your way.</span></h1>
+<p style="max-width:62ch;font-size:1.1rem">Discover CindraOS — a Debian-based Linux distribution built around accessible Live ISO downloads, customization and open development. Published v0.3 images can be downloaded directly; no need to compile your own.</p>
+<div class="acts"><a class="btn pri" href="#downloads">Download CindraOS</a><a class="btn" href="#features">Explore the project</a><a class="btn" href="#build">Build an ISO</a><a class="btn" href="https://github.com/danielwav1/CindraOS" target="_blank" rel="noopener noreferrer">View source code ↗</a></div>
+<div class="grid g2">
+<div class="panel"><span class="lbl">SYSTEM / TERMINAL</span><pre class="term"><span class="k">$</span> cindra version
+CindraOS 0.3 (Live Edition) — experimental
+<span class="k">$</span> cindra info    <span style="color:#5d636e"># documented command</span>
+base      Debian 13 "trixie"
+desktop   XFCE (Cindra-Dark / Cindra-Light)
+arch      amd64 only
+repo      <span id="hrepo">checking GitHub…</span></pre><p class="mono" style="font-size:.72rem">Illustrative of documented README output; not a live shell.</p></div>
+<div class="panel"><span class="lbl">SYSTEM / LAYERS (CONCEPTUAL)</span>
+<svg viewBox="0 0 400 230" role="img" aria-label="Conceptual system layers: Debian kernel at the core, then packages, live-build image, XFCE desktop and the cindra tool" width="100%"><g fill="none" stroke="#292d34"><circle cx="200" cy="115" r="100"/><circle cx="200" cy="115" r="70"/><circle cx="200" cy="115" r="40" stroke="#8f1022"/><path d="M0 115h100M300 115h100M200 0v15M200 215v15" stroke-dasharray="3 4"/></g><g class="spin" fill="none" stroke="#e11d35" stroke-dasharray="6 10"><circle cx="200" cy="115" r="85"/></g><g transform="translate(187 102) scale(.4)"><path fill="#e11d35" d="M54 8H22L8 22V42L22 56H54V44H27L20 37V27L27 20H54Z"/><rect fill="#f3f4f6" x="34" y="26" width="12" height="12"/></g><g fill="#e11d35"><circle cx="200" cy="15" r="3"/><circle cx="270" cy="115" r="3"/><circle cx="200" cy="185" r="3"/><circle cx="100" cy="115" r="3"/></g><text x="208" y="12">XFCE · THEMES</text><text x="276" y="119">cindra CLI</text><text x="208" y="196">LIVE-BUILD IMAGE</text><text x="6" y="106">DEBIAN PKGS</text><text x="173" y="150" style="fill:#e11d35">KERNEL</text></svg></div></div>
+<div class="strip"><div>TYPE<b>Linux distro project</b></div><div>FOUNDATION<b>Debian 13 trixie</b></div><div>REPOSITORY<b id="mrepo">—</b></div><div>LATEST RELEASE<b id="mrel">—</b></div><div>LATEST WORKFLOW<b id="mrun">—</b></div></div>
+</div></section>
+
+<section id="center"><div class="wrap"><div class="lbl">PLATFORM / COMMAND CENTER</div><h2>Command Center</h2><div class="grid g3"><a class="panel cc" href="#downloads"><h3>Download the ISO</h3><p>Real PC and VM images, direct from GitHub Releases.</p></a><a class="panel cc" href="https://github.com/danielwav1/CindraOS/releases/latest" target="_blank" rel="noopener noreferrer"><h3>Latest release ↗</h3><p>Opens GitHub's latest-release page.</p></a><a class="panel cc" href="https://github.com/danielwav1/CindraOS/actions" target="_blank" rel="noopener noreferrer"><h3>GitHub Actions ↗</h3><p>Workflow runs and logs.</p></a><a class="panel cc" href="#docs"><h3>Documentation</h3><p>Searchable links to repository docs.</p></a><a class="panel cc" href="#guides"><h3>Install guide</h3><p>USB and virtual machine walkthrough.</p></a><a class="panel cc" href="https://github.com/danielwav1/CindraOS/issues" target="_blank" rel="noopener noreferrer"><h3>Known issues ↗</h3><p>The open issue tracker.</p></a><a class="panel cc" href="https://github.com/danielwav1/CindraOS/blob/main/README.md" target="_blank" rel="noopener noreferrer"><h3>CLI (cindra) ↗</h3><p>Commands are described in the README.</p></a><a class="panel cc" href="#roadmap"><h3>Roadmap</h3><p>Planned items are labelled as plans.</p></a></div></div></section>
+<section id="features"><div class="wrap"><div class="lbl">SYSTEM / FEATURE MATRIX</div><h2>Specification</h2><p>Status is taken from the repository README (v0.3). Nothing planned is shown as shipped.</p>
+<div class="grid g3" id="fgrid"></div></div></section>
+
+<section id="downloads"><div class="wrap"><div class="lbl">DISTRIBUTION / RELEASES</div><h2>Download center</h2>
+<p>Two images are published on GitHub Releases for v0.3: Real PC (tag Release) and Virtual Machine (tag VM). They are not interchangeable. Direct links and checksums load live from GitHub.</p>
+<div class="row" role="group" aria-label="Choose target"><b class="mono" style="font-size:.8rem">Where do you want to run CindraOS?</b><button class="btn sm" id="sp" type="button" aria-pressed="false">Physical PC</button><button class="btn sm" id="sv" type="button" aria-pressed="false">Virtual machine</button></div><p id="recnote" class="mono" role="status" style="font-size:.78rem"></p>
+<div class="grid g2" style="margin:14px 0"><div class="panel" id="c-pc"><span class="lbl">REAL PC · LIVE ISO</span><h3>CindraOS 0.3 — Real PC</h3><p>Bootable live ISO for a physical computer (live version, no installer). Tag <code>Release</code>.</p><div id="a-pc"><div class="skel"></div></div><a class="btn sm" style="margin-top:8px" href="https://github.com/danielwav1/CindraOS/releases/tag/Release" target="_blank" rel="noopener noreferrer">Release page ↗</a></div><div class="panel" id="c-vm"><span class="lbl">VIRTUAL MACHINE · LIVE ISO</span><h3>CindraOS 0.3 — Virtual Machine</h3><p>The Real PC build optimized for VMs, per the release notes. Tag <code>VM</code>.</p><div id="a-vm"><div class="skel"></div></div><a class="btn sm" style="margin-top:8px" href="https://github.com/danielwav1/CindraOS/releases/tag/VM" target="_blank" rel="noopener noreferrer">Release page ↗</a></div></div>
+<p style="font-size:.85rem">You do not need to build an ISO: download a published image above. A SHA-256 is shown only when GitHub supplies one for the file; it checks integrity, not who published it.</p>
+<h3 style="margin-top:20px">Release history</h3><div id="rel"><div class="skel"></div><div class="skel"></div></div>
+<div class="acts"><a class="btn" href="https://github.com/danielwav1/CindraOS/releases" target="_blank" rel="noopener noreferrer">All releases ↗</a><button class="btn" id="rrefresh">Refresh</button></div></div></section>
+
+<section id="guides"><div class="wrap"><div class="lbl">GUIDES / USB &amp; VM</div><h2>Boot CindraOS</h2><p>Guidance only. This page cannot flash drives or touch your disks.</p>
+<div class="panel" style="margin-top:14px"><span class="lbl">SETUP WIZARD</span><progress id="wp" max="7" value="0" style="width:100%" aria-label="Wizard progress"></progress><div id="wz" aria-live="polite"></div><div class="row"><button class="btn sm" id="wb" type="button">Back</button><button class="btn sm pri" id="wn" type="button">Next</button><button class="btn sm" id="wr" type="button">Restart</button></div></div>
+<h3 style="margin-top:28px">FAQ</h3>
+<details><summary>What is CindraOS?</summary><p>An independent, Debian-based Linux distribution project. Current builds are live images.</p></details><details><summary>Is it based on Debian?</summary><p>Yes, Debian 13 "trixie" per the README. It is not endorsed by Debian.</p></details><details><summary>Do I need to build the ISO myself?</summary><p>No. The Real PC and VM images are on GitHub Releases. Building is optional for contributors.</p></details><details><summary>Is there an installer?</summary><p>The Real PC release is described as a live version with no install. An installer is only a plan.</p></details><details><summary>How do I verify an ISO?</summary><p>Compute its SHA-256 locally and compare it with the checksum shown on the Downloads card, if one is listed.</p></details><details><summary>Where is the source code?</summary><p><a href="https://github.com/danielwav1/CindraOS" target="_blank" rel="noopener noreferrer">github.com/danielwav1/CindraOS ↗</a></p></details>
+<div class="panel" id="bug" style="margin-top:24px"><span class="lbl">BUG REPORT ASSISTANT</span><p class="warn">Do not include passwords, keys or personal data. Review any logs before posting publicly. Nothing is sent from this page.</p>
+<label for="bv">Image</label><select id="bv"><option>0.3 Real PC (tag Release)</option><option>0.3 VM (tag VM)</option><option>Other / unsure</option></select><label for="bt">Target</label><select id="bt"><option>Real PC</option><option>Virtual machine</option></select><label for="be">Hardware or VM platform</label><input id="be" maxlength="120"><label for="bc">Category</label><select id="bc"><option>Boot failure</option><option>Black screen</option><option>Login</option><option>Desktop</option><option>Network</option><option>CLI (cindra)</option><option>Other</option></select><label for="bd">Description</label><textarea id="bd" rows="3"></textarea><label for="bx">Expected</label><textarea id="bx" rows="2"></textarea><label for="ba">Actual</label><textarea id="ba" rows="2"></textarea><label for="bs">Steps to reproduce</label><textarea id="bs" rows="3"></textarea>
+<div class="row"><button class="btn sm pri" id="bgen" type="button">Generate</button><button class="btn sm" id="bcp" type="button">Copy</button><a class="btn sm" href="https://github.com/danielwav1/CindraOS/issues/new" target="_blank" rel="noopener noreferrer">Open new issue ↗</a></div><label for="bout">Report text</label><textarea id="bout" rows="7" readonly></textarea></div></div></section>
+<section id="terminal"><div class="wrap"><div class="lbl">CLI / SIMULATION</div><h2>cindra terminal demo</h2>
+<p class="warn" role="note">Simulation only. Nothing is executed here and this is not a CindraOS install. It explains the documented <code>cindra</code> commands from the README; real output depends on your system, so none is faked.</p>
+<div class="panel" style="margin-top:14px"><div id="tchips" class="row" style="margin:0 0 10px" role="group" aria-label="Example commands"></div><pre class="term" id="tout" tabindex="0" role="log" aria-label="Simulated terminal output" style="height:280px"></pre>
+<div class="row"><span class="mono k" aria-hidden="true">$</span><input id="tin" aria-label="Simulated terminal input" placeholder="cindra info" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="120"><button class="btn sm pri" id="trun" type="button">Run</button><button class="btn sm" id="trst" type="button">Reset</button></div>
+<p class="mono" style="font-size:.72rem">Keys: Enter runs, ↑/↓ history. Also: <code>clear</code>, <code>history</code>.</p></div></div></section>
+<section id="docs"><div class="wrap"><div class="lbl">DOCUMENTATION / HUB</div><h2>Documentation</h2>
+<p>Links point to files visible in the repository. Search filters this list.</p>
+<label for="dq">Search documentation</label><input id="dq" type="search" placeholder="build, troubleshooting, cindra…" autocomplete="off">
+<div class="grid g3" id="dgrid" style="margin-top:14px" aria-live="polite"></div></div></section>
+
+<section id="build"><div class="wrap"><div class="lbl">BUILD / CONFIGURATION</div><h2>Build Center</h2><p>For contributors and advanced users. Ordinary users can download published ISOs from <a href="#downloads">Downloads</a> instead.</p>
+<div class="panel" style="border-top-color:var(--warn)"><b>WORKFLOW DRAFT — not connected to a build backend.</b><p>This page cannot run builds. Draft, export, and use the real <code>build.sh</code> or the <b>build-iso</b> workflow in Actions. Stages below are planning examples, not the repository's verified workflow.</p>
+<div class="acts" style="margin:8px 0 0"><a class="btn sm" href="https://github.com/danielwav1/CindraOS/blob/main/build.sh" target="_blank" rel="noopener noreferrer">build.sh ↗</a><a class="btn sm" href="https://github.com/danielwav1/CindraOS/blob/main/verify-iso.sh" target="_blank" rel="noopener noreferrer">verify-iso.sh ↗</a><a class="btn sm" href="https://github.com/danielwav1/CindraOS/actions" target="_blank" rel="noopener noreferrer">Actions ↗</a><a class="btn sm" href="https://github.com/danielwav1/CindraOS/blob/main/docs/BUILD.md" target="_blank" rel="noopener noreferrer">BUILD.md ↗</a></div></div>
+<div class="grid g2" style="margin-top:16px">
+<div class="panel"><span class="lbl">BUILD / WORKFLOW EDITOR</span>
+<label for="wname">Workflow name</label><input id="wname" maxlength="60">
+<div id="steps" style="margin-top:12px" aria-live="polite"></div>
+<div class="row"><label for="addsel" class="sr">Step type</label><select id="addsel" style="flex:1 1 160px;width:auto"></select><button class="btn sm" id="add">Add step</button><button class="btn sm" id="reset">Reset</button></div></div>
+<div class="panel"><span class="lbl">BUILD / VALIDATION &amp; JSON</span>
+<div id="valid" class="state" role="status"></div>
+<details style="margin-top:10px"><summary class="mono" style="cursor:pointer;font-size:.8rem">Advanced settings</summary>
+<label class="sw"><input type="checkbox" id="persist" checked> Save draft in this browser</label>
+<p style="font-size:.8rem">Integrations: none connected. No tokens are stored or requested.</p></details>
+<label for="json">Configuration JSON</label><textarea id="json" rows="9" spellcheck="false"></textarea>
+<div class="row"><button class="btn sm" id="imp">Import</button><button class="btn sm" id="exp">Export file</button><button class="btn sm" id="cp">Copy</button></div>
+<div id="jerr" class="mono" role="alert" style="color:var(--r);font-size:.78rem;margin-top:8px"></div></div></div>
+<div class="panel" style="margin-top:16px"><span class="lbl">BUILD / CONSOLE — LOCAL UI MESSAGES ONLY</span>
+<pre class="term" id="cons" tabindex="0" aria-label="Console output" role="log"></pre>
+<div class="row"><input type="search" id="cf" placeholder="Filter output" aria-label="Filter console output"><label class="sw"><input type="checkbox" id="auto" checked> Autoscroll</label><button class="btn sm" id="cclr">Clear</button><button class="btn sm" id="ccp">Copy</button><button class="btn sm" id="cbig" aria-pressed="false">Expand</button></div></div>
+<div class="panel" style="margin-top:16px"><span class="lbl">BUILD / ARTIFACTS</span><p>No artifacts: nothing has been built here. Real ISOs appear under <a href="#downloads">Downloads</a> once published as a release.</p></div>
+</div></section>
+
+<section id="development"><div class="wrap"><div class="lbl">DEVELOPMENT / PIPELINE</div><h2>Development dashboard</h2>
+<p>Live public GitHub data. A passing workflow does not prove the operating system works.</p>
+<div class="acts" style="margin-top:0"><button class="btn sm" id="drefresh">Refresh data</button><a class="btn sm" href="https://github.com/danielwav1/CindraOS" target="_blank" rel="noopener noreferrer">Source ↗</a><a class="btn sm" href="https://github.com/danielwav1/CindraOS/tree/main/.github/workflows" target="_blank" rel="noopener noreferrer">Workflows ↗</a></div>
+<div class="grid g2"><div class="panel"><span class="lbl">REPOSITORY / OVERVIEW</span><div id="repo"><div class="skel"></div></div></div>
+<div class="panel"><span class="lbl">DEVELOPMENT / ACTIONS</span><div id="runs"><div class="skel"></div></div></div>
+<div class="panel"><span class="lbl">REPOSITORY / ACTIVITY</span><div id="commits"><div class="skel"></div></div></div>
+<div class="panel"><span class="lbl">DEVELOPMENT / OPEN ISSUES</span><div id="issues"><div class="skel"></div></div></div></div></div></section>
+
+<section id="roadmap"><div class="wrap"><div class="lbl">PROJECT / STATUS</div><h2>Roadmap</h2><p>Completed items come from the README; planned items are the README's own "not available in 0.3" list. No dates or percentages.</p>
+<div class="tw"><table><thead><tr><th>Item</th><th>State</th></tr></thead><tbody id="rm"></tbody></table></div></div></section>
+
+<section id="about"><div class="wrap"><div class="lbl">PROJECT / ABOUT</div><h2>About CindraOS</h2>
+<div class="grid g2"><div><p>A Debian-based live Linux with a red V, a dark XFCE desktop and its own command line tool, <code>cindra</code>. Boot from USB, use it, shut down, and your disks are untouched. The kernel, package manager and nearly all software come from Debian.</p><p>It is experimental: not every hardware configuration has been tested. Created by Daniel, MIT licensed.</p></div>
+<div class="panel"><span class="lbl">COLLABORATE</span><p><a href="https://github.com/danielwav1/CindraOS/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contributing guide ↗</a><br><a href="https://github.com/danielwav1/CindraOS/issues" target="_blank" rel="noopener noreferrer">Report an issue ↗</a><br><a href="https://github.com/danielwav1/CindraOS/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT license ↗</a></p></div></div></div></section>
+</main>
+<footer><div class="wrap"><span>CINDRAOS · experimental</span><a href="https://github.com/danielwav1/CindraOS" target="_blank" rel="noopener noreferrer">Repository</a><a href="https://github.com/danielwav1/CindraOS/tree/main/docs" target="_blank" rel="noopener noreferrer">Docs</a><a href="https://github.com/danielwav1/CindraOS/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a><a href="#bug">Report a bug</a><button class="btn sm" id="rm2" type="button" aria-pressed="false">Reduce motion</button><span style="flex-basis:100%">© <span id="yr"></span> CindraOS — an independent project, not endorsed by Debian. Third-party trademarks belong to their owners.</span></div></footer>
+
+<div id="pal" role="dialog" aria-modal="true" aria-label="Command palette"><div class="box"><input id="pq" placeholder="Type a command or section…" aria-label="Command search" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="pl"><ul id="pl" role="listbox"></ul></div></div>
+
+<script>
+(function(){
+"use strict";
+var GH="https://github.com/danielwav1/CindraOS",API="https://api.github.com/repos/danielwav1/CindraOS";
+var $=function(i){return document.getElementById(i)};
+function E(t,a,k){var e=document.createElement(t);if(a)for(var x in a){if(x==="text")e.textContent=a[x];else e.setAttribute(x,a[x])}(k||[]).forEach(function(c){e.appendChild(c)});return e}
+function A(h,t){return E("a",{href:h,target:"_blank",rel:"noopener noreferrer",text:t})}
+function safeUrl(u){return typeof u==="string"&&/^https:\/\/(github\.com|api\.github\.com)\//.test(u)?u:GH}
+function ago(d){var t=new Date(d);return isNaN(t)?"—":t.toISOString().slice(0,16).replace("T"," ")+" UTC"}
+function st(box,msg){box.replaceChildren(E("div",{"class":"state",role:"status",text:msg}))}
+
+/* console */
+var lines=[];
+function log(m){lines.push("["+new Date().toISOString().slice(11,19)+"] [UI] "+m);drawCons()}
+function drawCons(){var f=$("cf").value.toLowerCase(),c=$("cons");c.textContent=lines.filter(function(l){return l.toLowerCase().indexOf(f)>-1}).join("\n");if($("auto").checked)c.scrollTop=c.scrollHeight}
+lines.push("[UI] No build process is connected to this browser.","[UI] Messages here are local interface feedback, not build output.","[UI] To build, run ./build.sh or the build-iso workflow on GitHub.");
+$("cf").oninput=drawCons;$("cclr").onclick=function(){lines=[];drawCons()};
+$("ccp").onclick=function(){cp(lines.join("\n"),"Console copied")};
+$("cbig").onclick=function(){var b=$("cons").classList.toggle("big");this.setAttribute("aria-pressed",b);this.textContent=b?"Collapse":"Expand"};
+function cp(t,m){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){log(m)},function(){log("Clipboard unavailable; select and copy manually.")})}
+
+/* features / docs / roadmap data */
+var F=[["OS","Operating system","Live Debian 13 system for USB and VMs, BIOS and UEFI. Experimental v0.3.","Experimental"],
+["DB","Debian foundation","Kernel, apt and nearly all software come from Debian.","Available"],
+["ISO","ISO generation","live-build based ./build.sh produces an amd64 ISO and checksum.","Requires configuration"],
+["CI","Build automation","A build-iso workflow exists under GitHub Actions.","Available"],
+["CLI","Development tools","The cindra tool: info, checkup, update, logs, network, report.","Available"],
+["SRC","Source code","Public repository, MIT licensed.","Available"],
+["TST","Testing","bash tests/run.sh; hardware compatibility not broadly tested.","Experimental"],
+["DOC","Documentation","docs/ holds build, testing, troubleshooting, live session notes.","Available"],
+["PR","Community contributions","Pull requests welcome per CONTRIBUTING.md.","Available"],
+["INS","Installer / persistence / Secure Boot","Not available in 0.3.","Planned"]];
+var cls={Available:"av",Experimental:"ex",Planned:"pl","Requires configuration":"rq"};
+var fg=$("fgrid");F.forEach(function(f){fg.appendChild(E("div",{"class":"panel feat"},[E("div",{"class":"ico",text:f[0]}),E("div",0,[E("h3",{text:f[1]}),E("span",{"class":"tag "+cls[f[3]],text:f[3]}),E("p",{text:f[2]})])]))});
+var D=[["Getting started / README","README.md","getting started install usb boot"],["Project overview","README.md","overview project features"],["Build instructions","docs/BUILD.md","build iso generation"],["ISO generation","docs/BUILD.md","iso live-build build.sh"],["Testing","docs/TESTING.md","tests run.sh"],["Live session","docs/LIVE-SESSION.md","live session usb persistence"],["Debian components","docs/DEBIAN-COMPONENTS.md","debian packages components"],["Troubleshooting","docs/TROUBLESHOOTING.md","troubleshooting black screen nomodeset"],["Contributing","CONTRIBUTING.md","contributing pull request"],["Changelog","CHANGELOG.md","changelog versions"],["GitHub Actions","/tree/main/.github/workflows","actions workflows build-iso"],["Repository structure / scripts","/tree/main/scripts","scripts structure cindra layout"],["Issue reporting","/issues","issue bug report"]];
+function dpath(p){return p.charAt(0)==="/"?GH+p:GH+"/blob/main/"+p}
+function drawDocs(){var q=$("dq").value.toLowerCase().trim(),g=$("dgrid");g.replaceChildren();var r=D.filter(function(d){return!q||(d[0]+" "+d[2]).toLowerCase().indexOf(q)>-1});
+if(!r.length){g.appendChild(E("div",{"class":"state"},[document.createTextNode("No match. "),A(GH,"Browse the repository ↗")]));return}
+r.forEach(function(d){g.appendChild(E("div",{"class":"panel"},[E("h3",{text:d[0]}),E("p",{"class":"mono",style:"font-size:.75rem",text:d[1]}),A(dpath(d[1]),"Open on GitHub ↗")]))})}
+$("dq").oninput=drawDocs;drawDocs();
+var RM=[["Live ISO build (amd64), XFCE desktop, cindra CLI","Completed"],["Test suite and build-iso workflow","Completed"],["Broader hardware testing","In progress"],["Custom boot splash","Planned"],["Installer","Planned"],["Persistent storage","Planned"],["Secure Boot support","Planned"],["ARM / 32-bit images","Planned"]];
+var rm=$("rm");RM.forEach(function(r){var c=r[1]==="Completed"?"av":r[1]==="In progress"?"ex":"pl";rm.appendChild(E("tr",0,[E("td",{text:r[0]}),E("td",0,[E("span",{"class":"tag "+c,text:r[1]})])]))});
+
+/* GitHub data */
+var busy=false;
+function get(p){return fetch(API+p,{headers:{Accept:"application/vnd.github+json"}}).then(function(r){if(r.status===403||r.status===429)throw new Error("Rate limited by GitHub. Try again later.");if(!r.ok)throw new Error("GitHub returned HTTP "+r.status);return r.json()})}
+function table(box,head,rows){var t=E("table",0,[E("thead",0,[E("tr",0,head.map(function(h){return E("th",{text:h})}))]),E("tbody",0,rows)]);box.replaceChildren(E("div",{"class":"tw"},[t]))}
+function fail(box,e){st(box,"Unavailable: "+(e&&e.message&&e.message!=="Failed to fetch"?e.message:"network error or blocked request")+". Open GitHub directly.")}
+function load(){if(busy)return;busy=true;
+["rel","repo","runs","commits","issues"].forEach(function(i){$(i).replaceChildren(E("div",{"class":"skel"}),E("div",{"class":"skel"}))});
+var jobs=[
+get("").then(function(r){var d=[["Description",r.description],["Default branch",r.default_branch],["Stars",r.stargazers_count],["Forks",r.forks_count],["License",r.license&&r.license.spdx_id],["Pushed",r.pushed_at&&ago(r.pushed_at)]];
+table($("repo"),["Field","Value"],d.map(function(x){return E("tr",0,[E("td",{"class":"mono",text:x[0]}),E("td",{text:x[1]==null?"—":String(x[1])})])}));
+$("hrepo").textContent="danielwav1/CindraOS ("+(r.private?"private":"public")+")";$("mrepo").textContent=r.default_branch?"branch "+r.default_branch:"reachable"}).catch(function(e){fail($("repo"),e);$("hrepo").textContent="GitHub status unavailable"}),
+get("/releases").then(function(rs){cards(rs);if(!Array.isArray(rs)||!rs.length){st($("rel"),"No public GitHub release is currently available. No ISO is published here yet.");$("mrel").textContent="none published";return}
+$("mrel").textContent=rs[0].tag_name||"—";var box=$("rel");box.replaceChildren();
+rs.slice(0,5).forEach(function(r){var as=Array.isArray(r.assets)?r.assets:[];var p=E("div",{"class":"panel",style:"margin-bottom:12px"},[E("h3",{text:(r.name||r.tag_name||"Release")+" · "+(r.tag_name||"")}),E("p",{"class":"mono",style:"font-size:.75rem",text:ago(r.published_at)+(r.prerelease?" · pre-release":"")})]);
+if(r.body)p.appendChild(E("pre",{"class":"term",style:"max-height:140px",text:String(r.body).slice(0,800)}));
+as.forEach(function(a){var iso=/\.iso$/i.test(a.name||"");var l=A(safeUrl(a.browser_download_url),(iso?"ISO ":"")+(a.name||"asset")+" ("+(a.size?(a.size/1048576).toFixed(1)+" MB":"size n/a")+")");l.className="btn"+(iso?" pri":" sm");l.style.margin="8px 8px 0 0";p.appendChild(l)});
+if(!as.length)p.appendChild(E("p",{text:"No assets attached."}));
+if(r.zipball_url)p.appendChild(A(safeUrl(r.html_url),"Release page ↗"));box.appendChild(p)})}).catch(function(e){fail($("rel"),e);$("mrel").textContent="unavailable"}),
+get("/actions/runs?per_page=5").then(function(d){var rs=d&&d.workflow_runs||[];if(!rs.length){st($("runs"),"No workflow runs found.");$("mrun").textContent="none";return}
+function lab(r){return r.status!=="completed"?(r.status==="queued"?"queued":"in progress"):r.conclusion==="success"?"success":r.conclusion==="failure"?"failed":r.conclusion==="cancelled"?"cancelled":(r.conclusion||"unknown")}
+$("mrun").textContent=lab(rs[0]);
+table($("runs"),["Workflow","Status","When"],rs.map(function(r){var l=lab(r);return E("tr",0,[E("td",0,[A(safeUrl(r.html_url),r.name||"run")]),E("td",{"class":"mono",style:"color:"+(l==="success"?"var(--ok)":l==="failed"?"var(--r)":"var(--t2)"),text:l}),E("td",{"class":"mono",text:ago(r.created_at)})])}))}).catch(function(e){fail($("runs"),e);$("mrun").textContent="unavailable"}),
+get("/commits?per_page=5").then(function(cs){if(!cs.length){st($("commits"),"No commits returned.");return}
+table($("commits"),["Commit","Message"],cs.map(function(c){return E("tr",0,[E("td",{"class":"mono"},[A(safeUrl(c.html_url),String(c.sha||"").slice(0,7))]),E("td",{text:String(c.commit&&c.commit.message||"").split("\n")[0]})])}))}).catch(function(e){fail($("commits"),e)}),
+get("/issues?state=open&per_page=5").then(function(is){is=is.filter(function(i){return!i.pull_request});if(!is.length){st($("issues"),"No open issues.");return}
+table($("issues"),["#","Title"],is.map(function(i){return E("tr",0,[E("td",{"class":"mono",text:"#"+i.number}),E("td",0,[A(safeUrl(i.html_url),i.title||"issue")])])}))}).catch(function(e){fail($("issues"),e)})];
+Promise.all(jobs).then(function(){busy=false;log("GitHub data refresh finished.")})}
+$("rrefresh").onclick=$("drefresh").onclick=function(){log("Refreshing GitHub data…");load()};
+
+/* workflow */
+var TYPES={env:"Environment verification",cfg:"Configuration validation",deps:"Dependency preparation",iso:"ISO build stage",verify:"Artifact verification",review:"Result review"};
+var DEF=["env","cfg","deps","iso","verify","review"],KEY="cindra.workflow.v1",W,uid=0;
+function mk(t,on){return{id:++uid,type:t,enabled:on!==false,label:TYPES[t],optional:t!=="iso"&&t!=="env"}}
+function fresh(){return{name:"CindraOS draft",steps:DEF.map(function(t){return mk(t)})}}
+function save(){if($("persist").checked)try{localStorage.setItem(KEY,JSON.stringify(ser()))}catch(e){}}
+function ser(){return{name:W.name,steps:W.steps.map(function(s){return{type:s.type,enabled:s.enabled,label:s.label}})}}
+function check(o){if(!o||typeof o!=="object"||Array.isArray(o))return"Top level must be an object.";if(typeof o.name!=="string"||!o.name.trim()||o.name.length>60)return'"name" must be a non-empty string (max 60).';if(!Array.isArray(o.steps)||!o.steps.length||o.steps.length>30)return'"steps" must be an array of 1–30 items.';
+for(var i=0;i<o.steps.length;i++){var s=o.steps[i];if(!s||typeof s!=="object")return"Step "+(i+1)+" is not an object.";if(!TYPES[s.type])return"Step "+(i+1)+': unsupported type "'+String(s.type).slice(0,30)+'". Allowed: '+Object.keys(TYPES).join(", ")+".";if(typeof s.enabled!=="boolean")return"Step "+(i+1)+': "enabled" must be true or false.';if(typeof s.label!=="string"||s.label.length>80)return"Step "+(i+1)+': "label" must be a string (max 80).'}return""}
+function draw(){W.name=W.name||"";$("wname").value=W.name;var c=$("steps");c.replaceChildren();
+W.steps.forEach(function(s,i){var row=E("div",{"class":"step"+(s.enabled?"":" off")});
+var inp=E("input",{type:"text",value:s.label,"aria-label":"Label for step "+(i+1),maxlength:80});inp.oninput=function(){s.label=inp.value;sync(true)};
+var tg=E("input",{type:"checkbox","aria-label":"Enable step "+(i+1)});tg.checked=s.enabled;tg.onchange=function(){s.enabled=tg.checked;draw();log("Step "+(i+1)+(s.enabled?" enabled":" disabled")+" in draft.")};
+function b(t,l,f,d){var x=E("button",{"class":"btn sm",type:"button","aria-label":l+" step "+(i+1),text:t});if(d)x.disabled=true;x.onclick=f;return x}
+function mv(d){var j=i+d;var t=W.steps[i];W.steps[i]=W.steps[j];W.steps[j]=t;draw();log("Moved step to position "+(j+1)+".");var n=$("steps").children[j];n&&n.querySelector("button:not(:disabled)")}
+row.appendChild(E("span",{"class":"n",text:String(i+1).padStart(2,"0")}));
+row.appendChild(E("div",0,[E("span",{"class":"sub",text:TYPES[s.type]}),inp]));
+row.appendChild(E("div",{"class":"ctl"},[E("label",{"class":"sw"},[tg,document.createTextNode("On")]),b("↑","Move up",function(){mv(-1)},i===0),b("↓","Move down",function(){mv(1)},i===W.steps.length-1),b("✕","Remove",function(){W.steps.splice(i,1);draw();log("Removed a step from draft.")})]));
+c.appendChild(row)});sync()}
+function sync(skipList){$("json").value=JSON.stringify(ser(),null,2);var en=W.steps.filter(function(s){return s.enabled}).length;var hasIso=W.steps.some(function(s){return s.enabled&&s.type==="iso"});
+$("valid").textContent="DRAFT · "+W.steps.length+" steps, "+en+" enabled · "+(en?(hasIso?"valid":"valid, but no ISO build stage enabled"):"no enabled steps")+" · "+($("persist").checked?"saved locally":"not saved");save()}
+$("wname").oninput=function(){W.name=this.value;sync()};
+Object.keys(TYPES).forEach(function(k){$("addsel").appendChild(E("option",{value:k,text:TYPES[k]}))});
+$("add").onclick=function(){if(W.steps.length>=30){log("Step limit (30) reached.");return}W.steps.push(mk($("addsel").value));draw();log("Added step to draft.")};
+$("reset").onclick=function(){W=fresh();draw();$("jerr").textContent="";log("Draft reset to default stages.")};
+$("imp").onclick=function(){var e=$("jerr");e.textContent="";var o;try{o=JSON.parse($("json").value)}catch(x){e.textContent="Invalid JSON: "+x.message;return}var m=check(o);if(m){e.textContent="Rejected: "+m;return}
+W={name:o.name.trim(),steps:o.steps.map(function(s){return{id:++uid,type:s.type,enabled:s.enabled,label:s.label}})};draw();log("Configuration imported ("+W.steps.length+" steps).")};
+$("exp").onclick=function(){var u=URL.createObjectURL(new Blob([$("json").value],{type:"application/json"}));var a=E("a",{href:u,download:"cindraos-workflow.json"});document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},500);log("Configuration export requested (browser may block downloads in embedded views; use Copy).")};
+$("cp").onclick=function(){cp($("json").value,"Configuration copied.")};
+$("persist").onchange=sync;
+W=fresh();try{var s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&!check(s))W={name:s.name,steps:s.steps.map(function(x){return{id:++uid,type:x.type,enabled:x.enabled,label:x.label}})}}catch(e){}
+draw();drawCons();
+
+/* nav */
+var nav=$("nav"),bg=$("burger");
+function menu(o){nav.classList.toggle("open",o);bg.setAttribute("aria-expanded",o)}
+bg.onclick=function(){menu(!nav.classList.contains("open"))};
+nav.addEventListener("click",function(e){if(e.target.tagName==="A")menu(false)});
+var secs=[].slice.call(document.querySelectorAll("main section"));
+function spy(){var y=window.scrollY+120,cur=secs[0].id;secs.forEach(function(s){if(s.offsetTop<=y)cur=s.id});[].forEach.call(nav.querySelectorAll("a"),function(a){a.classList.toggle("on",a.getAttribute("href")==="#"+cur)})}
+addEventListener("scroll",spy,{passive:true});spy();
+var mac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);$("kk").textContent=mac?"⌘K":"Ctrl K";
+
+/* palette */
+var C=[["Overview","#overview"],["Features","#features"],["Downloads / Releases","#downloads"],["Documentation","#docs"],["Build Center","#build"],["Development","#development"],["Roadmap","#roadmap"],["About","#about"]].map(function(x){return{t:x[0],h:x[1],k:"Section"}}).concat([["GitHub repository",GH],["Releases on GitHub",GH+"/releases"],["Actions workflows",GH+"/actions"],["Open issues",GH+"/issues"],["README",GH+"/blob/main/README.md"],["build.sh",GH+"/blob/main/build.sh"],["Contributing",GH+"/blob/main/CONTRIBUTING.md"]].map(function(x){return{t:x[0],h:x[1],k:"GitHub ↗"}}));
+D.forEach(function(d){C.push({t:"Docs: "+d[0],h:dpath(d[1]),k:"GitHub ↗"})});
+var sel=0,res=[],last=null,pal=$("pal");
+function pdraw(){var q=$("pq").value.toLowerCase();res=C.filter(function(c){return c.t.toLowerCase().indexOf(q)>-1});sel=Math.min(sel,Math.max(0,res.length-1));var u=$("pl");u.replaceChildren();
+if(!res.length){u.appendChild(E("li",{text:"No results"}));return}
+res.forEach(function(c,i){var li=E("li",{role:"option","aria-selected":i===sel},[E("div",{text:c.t}),E("span",{text:c.k})]);li.onclick=function(){go(c)};u.appendChild(li)});var s=u.children[sel];s&&s.scrollIntoView({block:"nearest"})}
+function go(c){close();if(c.h.charAt(0)==="#"){var t=document.querySelector(c.h);t&&t.scrollIntoView();history.replaceState(null,"",c.h)}else window.open(c.h,"_blank","noopener,noreferrer")}
+function open(){last=document.activeElement;pal.classList.add("open");$("pq").value="";sel=0;pdraw();$("pq").focus()}
+function close(){pal.classList.remove("open");if(last&&last.focus)last.focus()}
+$("palbtn").onclick=open;pal.onclick=function(e){if(e.target===pal)close()};
+$("pq").oninput=function(){sel=0;pdraw()};
+document.addEventListener("keydown",function(e){
+if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();pal.classList.contains("open")?close():open();return}
+if(e.key==="Escape"){if(pal.classList.contains("open"))close();else if(nav.classList.contains("open")){menu(false);bg.focus()}return}
+if(!pal.classList.contains("open"))return;
+if(e.key==="ArrowDown"){e.preventDefault();sel=Math.min(sel+1,res.length-1);pdraw()}
+else if(e.key==="ArrowUp"){e.preventDefault();sel=Math.max(sel-1,0);pdraw()}
+else if(e.key==="Enter"&&res[sel]){e.preventDefault();go(res[sel])}
+else if(e.key==="Tab"){e.preventDefault();$("pq").focus()}});
+
+var TAG={pc:"Release",vm:"VM"},wz={s:0,t:"pc"};
+function pickTarget(t){wz.t=t;["pc","vm"].forEach(function(k){$("c-"+k).classList.toggle("rec",k===t)});$("sp").setAttribute("aria-pressed",t==="pc");$("sv").setAttribute("aria-pressed",t==="vm");$("recnote").textContent=t==="pc"?"Suggested: the Real PC image, a live ISO for physical computers. Compatibility with your specific hardware is not guaranteed.":"Suggested: the VM image, the Real PC build optimized for VMs. The project has not published tested VM settings."}
+$("sp").onclick=function(){pickTarget("pc");wzdraw()};$("sv").onclick=function(){pickTarget("vm");wzdraw()};
+function cards(rs){["pc","vm"].forEach(function(k){var box=$("a-"+k);box.replaceChildren();var r=(Array.isArray(rs)?rs:[]).filter(function(x){return x.tag_name===TAG[k]})[0];if(!r){box.appendChild(E("p",{"class":"mono",style:"font-size:.75rem",text:"Live release data not loaded. Use the release page link."}));return}
+box.appendChild(E("p",{"class":"mono",style:"font-size:.75rem",text:(r.name||r.tag_name)+" · "+ago(r.published_at)}));var as=r.assets||[];
+as.forEach(function(a){var iso=/\.iso$/i.test(a.name||"");var l=A(safeUrl(a.browser_download_url),(iso?"Download ISO: ":"Asset: ")+a.name+(a.size?" ("+(a.size/1048576).toFixed(0)+" MB)":""));l.className="btn"+(iso?" pri":" sm");l.style.margin="6px 6px 0 0";box.appendChild(l);
+if(typeof a.digest==="string"&&/^sha256:[0-9a-f]{64}$/i.test(a.digest)){var h=a.digest.slice(7),row=E("div",{"class":"row"},[E("code",{style:"font-size:.7rem;word-break:break-all",text:"SHA-256 "+h})]),b=E("button",{"class":"btn sm",type:"button",text:"Copy"});b.onclick=function(){cp(h,"Checksum copied.")};row.appendChild(b);box.appendChild(row)}});
+if(!as.length)box.appendChild(E("p",{text:"No assets listed. Use the release page."}))})}
+var TS=GH+"/blob/main/docs/TROUBLESHOOTING.md";
+function WS(){var pc=wz.t==="pc",rel=GH+"/releases/tag/"+TAG[wz.t];var tg={h:"Choose target",p:["Where do you want to run CindraOS?"]},dl={h:"Download",p:["Open the "+(pc?"Real PC":"VM")+" release page and download the .iso. Do not mix the two images."],l:[["Release page ↗",rel]]},vf={h:"Verify (optional)",p:["Compare the SHA-256 with the Downloads card if one is listed.","Linux: sha256sum file.iso · macOS: shasum -a 256 file.iso · Windows PowerShell: Get-FileHash file.iso -Algorithm SHA256","A match shows the file is intact; it does not prove who published it."]};
+if(!pc)return[tg,dl,vf,{h:"Create the VM",p:["In VirtualBox, VMware or UTM, create a new 64-bit Linux VM and attach the ISO as its optical drive.","The README lists amd64 only, so ARM hosts such as Apple Silicon are not covered. Adjust memory and disk to your platform's guidance."]},{h:"Boot and troubleshoot",p:["Start the VM. If it will not boot, check the troubleshooting guide, then use the bug assistant below."],l:[["TROUBLESHOOTING.md ↗",TS]]}];
+return[tg,dl,vf,{h:"Prepare a USB drive",w:"Flashing erases everything on the selected drive. Back up first.",p:["Use a drive larger than the ISO size shown on the release."]},{h:"Pick a flashing tool",p:["Options depend on your OS. Rufus is Windows-only; per the README choose DD Image mode there. On Android the README suggests EtchDroid."],l:[["balenaEtcher ↗","https://etcher.balena.io/"],["Rufus ↗","https://rufus.ie/"]]},{h:"Flash",p:["Select the correct ISO.","Select the correct USB drive and double-check it.","Start flashing and wait for completion."]},{h:"Boot",p:["Restart and open the firmware boot menu (key varies, e.g. Esc, F2, F10, F12 or Del) and pick the USB drive.","Per the README, turn Secure Boot off. Black screen? Press e on the boot entry, add nomodeset to the kernel line and boot."],l:[["TROUBLESHOOTING.md ↗",TS]]}]}
+function wzdraw(){var S=WS(),n=S.length;wz.s=Math.min(wz.s,n-1);var s=S[wz.s],b=$("wz");b.replaceChildren(E("h3",{text:"Step "+(wz.s+1)+" of "+n+" — "+s.h}));
+if(wz.s===0)[["pc","Physical PC"],["vm","Virtual machine"]].forEach(function(x){var bt=E("button",{"class":"btn sm"+(wz.t===x[0]?" pri":""),type:"button","aria-pressed":wz.t===x[0],text:x[1]});bt.onclick=function(){pickTarget(x[0]);wzdraw()};b.appendChild(bt)});
+if(s.w)b.appendChild(E("p",{"class":"warn",role:"alert",text:s.w}));(s.p||[]).forEach(function(t){b.appendChild(E("p",{text:t}))});(s.l||[]).forEach(function(l){var a=A(l[1],l[0]);a.className="btn sm";a.style.marginRight="8px";b.appendChild(a)});
+if(wz.s===n-1&&n>1)b.appendChild(E("p",{"class":"mono",text:"Done. Problems? Use the bug report assistant below."}));
+$("wp").max=n-1;$("wp").value=wz.s;$("wb").disabled=wz.s===0;$("wn").disabled=wz.s===n-1}
+$("wb").onclick=function(){wz.s--;wzdraw()};$("wn").onclick=function(){wz.s++;wzdraw()};$("wr").onclick=function(){wz.s=0;wzdraw()};wzdraw();
+$("bgen").onclick=function(){var f=function(i){return $(i).value.trim()||"(not provided)"};$("bout").value="### CindraOS bug report\n- Image: "+f("bv")+"\n- Target: "+f("bt")+"\n- Environment: "+f("be")+"\n- Category: "+f("bc")+"\n\n**Description**\n"+f("bd")+"\n\n**Expected**\n"+f("bx")+"\n\n**Actual**\n"+f("ba")+"\n\n**Steps to reproduce**\n"+f("bs");log("Bug report text generated locally.")};
+$("bcp").onclick=function(){cp($("bout").value,"Bug report copied.")};
+$("yr").textContent=new Date().getFullYear();
+function rmo(on){document.documentElement.toggleAttribute("data-rm",on);$("rm2").setAttribute("aria-pressed",on);try{localStorage.setItem("cindra.rm",on?"1":"0")}catch(e){}}
+try{if(localStorage.getItem("cindra.rm")==="1")rmo(true)}catch(e){}
+$("rm2").onclick=function(){rmo(!document.documentElement.hasAttribute("data-rm"))};
+C.push({t:"Setup wizard (USB / VM)",h:"#guides",k:"Section"},{t:"Bug report assistant",h:"#bug",k:"Section"},{t:"Command Center",h:"#center",k:"Section"});
+var VC={help:["","command overview"],version:["[--short]","version and edition"],info:["","system overview"],sys:["","kernel, CPU, memory, swap, uptime, disk"],checkup:["","checks the important system components"],desktop:["","desktop session, components, active themes"],update:["","refresh package lists, upgrade after confirmation"],clean:["","show and remove the package cache and unused packages after confirmation"],repair:["","read-only diagnostics, fixes only after confirmation"],logs:["[errors|boot|kernel|unit NAME] [-n N]","system logs"],network:["[--offline]","interfaces, gateway, DNS and HTTPS check"],theme:["[list|current|set NAME]","switch between cindra-dark and cindra-light"],about:["","project information"],report:["[-o FILE]","local diagnostic report with personal data masked; nothing is sent anywhere"],banner:["","startup banner"]};
+var NT={update:"It asks for confirmation before upgrading; -y answers yes.",clean:"It asks for confirmation; -y answers yes.",repair:"Fixes only after confirmation; -y is never applied to repair.",network:"Contacts deb.debian.org unless --offline is given.",report:"Nothing is sent anywhere. Read the report before attaching it to a bug."};
+var th=[],hp=0,tl=[];
+function tp(s){tl.push(s);var o=$("tout");o.textContent=tl.join("\n");o.scrollTop=o.scrollHeight}
+function tintro(){tl=[];tp("[simulation] Documented cindra commands only. Type 'cindra help'.")}
+function logsOk(r){var i=0;if(/^(errors|boot|kernel)$/.test(r[0]||""))i=1;else if(r[0]==="unit"){if(!/^[\w.@\-]{1,60}$/.test(r[1]||""))return false;i=2}if(r[i]==="-n"){if(!/^\d{1,5}$/.test(r[i+1]||""))return false;i+=2}return i===r.length}
+function run(raw){var line=raw.trim();tp("$ "+raw);if(!line)return;th.push(line);hp=th.length;var a=line.split(/\s+/);
+if(line==="clear"){tintro();return}
+if(line==="history"){th.forEach(function(h,i){tp("  "+(i+1)+"  "+h)});return}
+if(a[0]==="help")a=["cindra","help"];
+if(a[0]!=="cindra"){tp("command not found: "+a[0].slice(0,40)+". This simulation only knows documented cindra commands. Try: cindra help");return}
+a=a.slice(1);var fl=[];while(a[0]==="-y"||a[0]==="--yes"||a[0]==="--no-color")fl.push(a.shift());var c=a.shift(),r=a;
+if(!c||c==="help"){tp("cindra — documented commands (from the README):");Object.keys(VC).forEach(function(k){tp("  "+(k+"         ").slice(0,10)+VC[k][1])});tp("Options before the command: -y/--yes, --no-color. Exit codes: 0 ok, 1 failure, 2 usage error, 3 missing dependency.");return}
+if(!VC.hasOwnProperty(c)){tp("usage error (exit 2): unknown command '"+c.slice(0,30)+"'. Try: cindra help");return}
+var ok;if(c==="version")ok=!r.length||(r.length===1&&r[0]==="--short");else if(c==="network")ok=!r.length||(r.length===1&&r[0]==="--offline");else if(c==="theme")ok=!r.length||(r.length===1&&/^(list|current)$/.test(r[0]))||(r.length===2&&r[0]==="set"&&/^cindra-(dark|light)$/.test(r[1]));else if(c==="report")ok=!r.length||(r.length===2&&r[0]==="-o"&&/^[\w.\-\/]{1,60}$/.test(r[1]));else if(c==="logs")ok=logsOk(r);else ok=!r.length;
+if(!ok){tp("usage error (exit 2). Syntax: cindra "+c+(VC[c][0]?" "+VC[c][0]:""));return}
+tp("[simulation] cindra "+c+(r.length?" "+r.join(" "):""));tp("What it does: "+VC[c][1]+".");if(NT[c])tp(NT[c]);if(fl.length)tp("Options given before the command: "+fl.join(" "));tp("Real output depends on your system and is not printed by this demo.")}
+Object.keys(VC).forEach(function(k){var b=E("button",{"class":"btn sm",type:"button",text:k});b.onclick=function(){run("cindra "+k);$("tin").focus()};$("tchips").appendChild(b)});
+$("tin").onkeydown=function(e){if(e.key==="Enter"){run(this.value);this.value=""}else if(e.key==="ArrowUp"){e.preventDefault();hp=Math.max(0,hp-1);this.value=th[hp]||""}else if(e.key==="ArrowDown"){e.preventDefault();hp=Math.min(th.length,hp+1);this.value=th[hp]||""}};
+$("trun").onclick=function(){var i=$("tin");run(i.value);i.value="";i.focus()};$("trst").onclick=function(){th=[];hp=0;tintro()};tintro();
+C.push({t:"cindra terminal demo (simulation)",h:"#terminal",k:"Section"});
+var ck=$("clk");function tick(){ck.textContent=new Date().toISOString().slice(0,19).replace("T"," ")+"Z"}tick();setInterval(tick,1000);
+load();
+})();
+</script></body></html>
