@@ -1,0 +1,46 @@
+name: build-iso
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['main', 'cindra-rebrand']
+    tags: ['v*']
+
+jobs:
+  iso:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie
+      options: --privileged
+    steps:
+      - name: Enable non-free-firmware and install build tools
+        run: |
+          sed -i 's/^Components: main$/Components: main non-free-firmware/' /etc/apt/sources.list.d/debian.sources
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools procps iproute2 pciutils
+          git config --global --add safe.directory '*'
+      - uses: actions/checkout@v4
+      - name: Run tests
+        run: bash tests/run.sh
+      - name: Check package names
+        continue-on-error: true
+        run: bash scripts/check-packages.sh
+      - name: Show source version
+        run: git log -1 --oneline && grep -n -e '--architecture' -e '--binary-image' build.sh
+      - name: Build ISO
+        run: CINDRA_MIN_FREE_GB=8 bash build.sh
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: cindraos-iso
+          path: |
+            out/*.iso
+            out/*.sha256
+            out/*.log
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: out/*.log
+          if-no-files-found: ignore
