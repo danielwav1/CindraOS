@@ -20,7 +20,7 @@ expect_eq "version --short" "$want" "$(cindra version --short)"
 
 out=$(cindra info); rc=$?
 expect_eq "info exits 0" 0 "$rc"
-expect_contains "info names the system" "$out" "CindraOS 0.3 Live"
+expect_contains "info names the system" "$out" "CindraOS 0.4.0 Live"
 expect_contains "info shows the kernel" "$out" "$(uname -r)"
 
 out=$(cindra sys); rc=$?
