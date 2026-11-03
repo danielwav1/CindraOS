@@ -1,0 +1,5 @@
+NAME="Cindra Dark"
+DESCRIPTION="Dark theme with red accents (default)"
+GTK="Cindra-Dark"
+ICONS="Papirus-Dark"
+WM="Cindra-Dark"
