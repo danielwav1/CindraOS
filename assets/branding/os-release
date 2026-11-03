@@ -9,3 +9,6 @@ DEBIAN_CODENAME=trixie
 HOME_URL="https://danielwav1.github.io/CindraOS"
 SUPPORT_URL="https://github.com/danielwav1/CindraOS/issues"
 BUG_REPORT_URL="https://github.com/danielwav1/CindraOS/issues"
+VARIANT="Live"
+VARIANT_ID=live
+LOGO=cindra-logo
