@@ -1,0 +1,2 @@
+[ -r /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion
+[ -r /usr/share/cindra/shell/cindra.bashrc ] && . /usr/share/cindra/shell/cindra.bashrc
