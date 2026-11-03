@@ -36,9 +36,7 @@ def logo_dark(size):
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rounded_rectangle((0, 0, big - 1, big - 1), radius=int(big * 96 / 512), fill=BG + (255,))
-    k = big / 512
-    for poly, col in ((LEFT, RED), (RIGHT, DARK_RED)):
-        d.polygon([(x * k, y * k) for x, y in poly], fill=col + (255,))
+    d.arc((int(big * 0.18), int(big * 0.18), int(big * 0.82), int(big * 0.82)), start=42, end=318, fill=RED + (255,), width=max(8, int(big * 0.17)))
     return img.resize((size, size), Image.LANCZOS)
 
 
@@ -63,10 +61,7 @@ def wallpaper(w=1920, h=1080):
     img = Image.fromarray(base.astype("uint8"), "RGB").convert("RGBA")
     mark = Image.new("RGBA", (w * 2, h * 2), (0, 0, 0, 0))
     d = ImageDraw.Draw(mark)
-    k = 1.7 * 2
-    ox, oy = 790 * 2, 110 * 2
-    for poly, col in ((LEFT, RED), (RIGHT, DARK_RED)):
-        d.polygon([(ox + x * k, oy + y * k) for x, y in poly], fill=col + (230,))
+    d.arc((2480, 180, 3320, 1020), start=42, end=318, fill=RED + (230,), width=170)
     mark = mark.resize((w, h), Image.LANCZOS)
     img.alpha_composite(mark)
     ImageDraw.Draw(img).line((0, 1010, w, 1010), fill=RED + (64,), width=2)
