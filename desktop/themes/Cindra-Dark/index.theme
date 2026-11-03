@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=Cindra-Dark
+Comment=CindraOS Dark theme with red accents, built on Arc-Dark
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=Cindra-Dark
+MetacityTheme=Cindra-Dark
+IconTheme=Papirus-Dark
