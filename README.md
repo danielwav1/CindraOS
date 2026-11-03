@@ -1,8 +1,8 @@
 # CindraOS
 
-A Debian-based live Linux with a red V, a dark XFCE desktop and its own command line tool, `cindra`. Boot it from a USB stick, use it, shut down, and your disks are untouched.
+A Debian-based live Linux with a red C-mark, a dark XFCE desktop and its own command line tool, `cindra`. Boot it from a USB stick, use it, shut down, and your disks are untouched.
 
-> **Experimental version 0.3 (Live Edition).** Not every hardware configuration has been tested. Expect rough edges and please report problems.
+> **Experimental version 0.4.0 (Live Edition).** Not every hardware configuration has been tested. Expect rough edges and please report problems.
 
 [Download](https://github.com/danielwav1/CindraOS/releases/latest) · [Website](https://danielwav1.github.io/CindraOS) · [Issues](https://github.com/danielwav1/CindraOS/issues)
 
@@ -23,7 +23,7 @@ A Debian-based live Linux with a red V, a dark XFCE desktop and its own command 
 - XFCE desktop with Cindra-Dark and Cindra-Light themes, red accent, own wallpaper and panel
 - File manager, text editor, screenshot tool, task manager, Firefox ESR
 - NetworkManager, PipeWire audio, power management
-- Terminal with a red V banner, clear prompt and handy aliases
+- Terminal with a red C-mark banner, clear prompt and handy aliases
 - The `cindra` tool for system info, checks, updates, logs and network diagnosis
 - No telemetry and no hidden network services
 
@@ -41,9 +41,9 @@ CindraOS is based on Debian 13 "trixie". The kernel, package manager and nearly 
 
 ## Install on a USB stick
 
-1. Download `CindraOS-0.3-live-amd64.iso` from the [Releases page](https://github.com/danielwav1/CindraOS/releases/latest). Optionally check it against the `.sha256` file:
+1. Download `CindraOS-0.4.0-live-amd64.iso` from the [Releases page](https://github.com/danielwav1/CindraOS/releases/latest). Optionally check it against the `.sha256` file:
    ```
-   sha256sum -c CindraOS-0.3-live-amd64.iso.sha256
+   sha256sum -c CindraOS-0.4.0-live-amd64.iso.sha256
    ```
 2. Flash it. **This erases the whole stick.**
 
@@ -55,7 +55,7 @@ CindraOS is based on Debian 13 "trixie". The kernel, package manager and nearly 
 
    ```
    lsblk
-   sudo dd if=CindraOS-0.3-live-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+   sudo dd if=CindraOS-0.4.0-live-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
    ```
    Replace `/dev/sdX` with your stick and double-check it with `lsblk`.
 
@@ -70,7 +70,7 @@ Black screen? On the boot entry press `e`, add `nomodeset` to the kernel line an
 To try it in a VM first:
 
 ```
-qemu-system-x86_64 -m 3072 -smp 2 -enable-kvm -cdrom CindraOS-0.3-live-amd64.iso -boot d
+qemu-system-x86_64 -m 3072 -smp 2 -enable-kvm -cdrom CindraOS-0.4.0-live-amd64.iso -boot d
 ```
 
 ### Good to know
