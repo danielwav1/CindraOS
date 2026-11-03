@@ -1,0 +1,67 @@
+@import url("file:///usr/share/themes/Arc/gtk-3.0/gtk.css");
+
+@define-color cindra_red #e0242b;
+@define-color cindra_red_dark #b81b21;
+@define-color theme_selected_bg_color #e0242b;
+@define-color theme_selected_fg_color #ffffff;
+@define-color selected_bg_color #e0242b;
+@define-color selected_fg_color #ffffff;
+@define-color link_color #e0242b;
+
+selection,
+*:selected,
+row:selected,
+.view:selected,
+iconview:selected,
+menuitem:hover,
+modelbutton:hover {
+    background-color: @cindra_red;
+    color: #ffffff;
+}
+
+button.suggested-action,
+.suggested-action {
+    background-image: none;
+    background-color: @cindra_red;
+    border-color: @cindra_red_dark;
+    color: #ffffff;
+}
+
+button.suggested-action:hover {
+    background-color: #ef3a41;
+}
+
+button.suggested-action:active {
+    background-color: @cindra_red_dark;
+}
+
+switch:checked,
+progressbar progress,
+scale highlight,
+levelbar block.filled {
+    background-color: @cindra_red;
+    background-image: none;
+    border-color: @cindra_red_dark;
+}
+
+check:checked,
+radio:checked {
+    background-color: @cindra_red;
+    background-image: none;
+    border-color: @cindra_red_dark;
+    color: #ffffff;
+}
+
+entry:focus,
+spinbutton:focus {
+    border-color: @cindra_red;
+}
+
+notebook > header > tabs > tab:checked {
+    box-shadow: inset 0 -2px @cindra_red;
+}
+
+scrollbar slider:hover,
+scrollbar slider:active {
+    background-color: @cindra_red;
+}
