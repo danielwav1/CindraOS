@@ -18,9 +18,9 @@ while IFS= read -r f; do
 done < <(find "$ROOT/desktop" -name '*.xml' | sort)
 
 out=$(bash -c 'source "$1"; echo "$ID|$ID_LIKE|$NAME|$VERSION_ID|$VARIANT_ID"' _ "$ROOT/assets/branding/os-release")
-expect_eq "os-release fields" "cindra|debian|CindraOS|0.3|live" "$out"
+expect_eq "os-release fields" "cindra|debian|CindraOS|0.4.0|live" "$out"
 out=$(bash -c 'source "$1"; echo "$VERSION|$EDITION|$STATUS|$AUTHOR"' _ "$ROOT/assets/branding/cindra-release")
-expect_eq "cindra-release fields" "0.3|Live|experimental|Daniel.cindra" "$out"
+expect_eq "cindra-release fields" "0.4.0|Live|experimental|Daniel.cindra" "$out"
 expect_eq "VERSION file matches os-release" "$(tr -d '[:space:]' < "$ROOT/VERSION")" "$(bash -c 'source "$1"; echo "$VERSION_ID"' _ "$ROOT/assets/branding/os-release")"
 
 list=$ROOT/live/config/package-lists/cindra.list.chroot
