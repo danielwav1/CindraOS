@@ -307,6 +307,7 @@ main() {
     fi
 
     mkdir -p "$OUT"
+    python3 "$ROOT/scripts/render-assets.py"
     stage
     build_image
     collect
