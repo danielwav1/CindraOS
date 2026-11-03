@@ -23,8 +23,7 @@ def v_layer(size, left, right, alpha=255, background=None):
     k = big / 512
     img = Image.new("RGBA", (big, big), background or (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    for poly, col in ((LEFT, left), (RIGHT, right)):
-        d.polygon([(x * k, y * k) for x, y in poly], fill=col + (alpha,))
+    d.arc((int(big * 0.18), int(big * 0.18), int(big * 0.82), int(big * 0.82)), start=42, end=318, fill=left + (alpha,), width=max(8, int(big * 0.17)))
     return img.resize((size, size), Image.LANCZOS)
 
 
