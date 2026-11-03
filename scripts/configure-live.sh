@@ -33,6 +33,7 @@ mkdir -p "$xfconf_dir"
 
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
     gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+    gtk-update-icon-cache -f -t /usr/share/icons/Cindra-Icons
 fi
 
 if update-alternatives --list x-terminal-emulator 2>/dev/null | grep -q xfce4-terminal.wrapper; then
