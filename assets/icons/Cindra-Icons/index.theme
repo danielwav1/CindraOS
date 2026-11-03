@@ -1,0 +1,12 @@
+[Icon Theme]
+Name=Cindra-Icons
+Comment=CindraOS red and graphite application icons
+Inherits=Papirus-Dark,hicolor
+Directories=scalable/apps
+
+[scalable/apps]
+Size=128
+Type=Scalable
+MinSize=16
+MaxSize=512
+Context=Applications

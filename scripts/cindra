@@ -1,0 +1,762 @@
+#!/usr/bin/env bash
+set -u
+set -o pipefail
+
+EX_FAIL=1
+EX_USAGE=2
+EX_DEPS=3
+
+RELEASE_FILE=${CINDRA_RELEASE_FILE:-/etc/cindra-release}
+OS_RELEASE_FILE=${CINDRA_OS_RELEASE:-/etc/os-release}
+SHARE_DIR=${CINDRA_SHARE_DIR:-/usr/share/cindra}
+CMDLINE_FILE=${CINDRA_CMDLINE:-/proc/cmdline}
+ASSUME_YES=0
+
+if [[ -t 1 && -z ${NO_COLOR:-} ]]; then
+    C_RED=$'\033[1;31m'
+    C_GRN=$'\033[1;32m'
+    C_YEL=$'\033[1;33m'
+    C_DIM=$'\033[2m'
+    C_BLD=$'\033[1m'
+    C_OFF=$'\033[0m'
+else
+    C_RED="" C_GRN="" C_YEL="" C_DIM="" C_BLD="" C_OFF=""
+fi
+
+say()  { printf '%s\n' "$*"; }
+warn() { printf 'cindra: warning: %s\n' "$*" >&2; }
+die()  { local code=$1; shift; printf 'cindra: error: %s\n' "$*" >&2; exit "$code"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+pkg_hint() {
+    case $1 in
+        ip|ss)                echo iproute2 ;;
+        ping)                 echo iputils-ping ;;
+        nmcli)                echo network-manager ;;
+        journalctl|systemctl) echo systemd ;;
+        xfconf-query)         echo xfconf ;;
+        apt|apt-get|dpkg)     echo apt ;;
+        du|df|find|uname)     echo coreutils ;;
+        *)                    echo "$1" ;;
+    esac
+}
+
+require() {
+    local tool missing=() hints=()
+    for tool in "$@"; do
+        have "$tool" || missing+=("$tool")
+    done
+    if (( ${#missing[@]} )); then
+        for tool in "${missing[@]}"; do hints+=("$(pkg_hint "$tool")"); done
+        die "$EX_DEPS" "missing required tool(s): ${missing[*]} (package: ${hints[*]})"
+    fi
+}
+
+kv_value() {
+    local file=$1 key=$2 line
+    [[ -r $file ]] || return 1
+    line=$(grep -m1 "^${key}=" "$file") || return 1
+    line=${line#*=}
+    line=${line#\"}
+    line=${line%\"}
+    printf '%s' "$line"
+}
+
+rel()   { kv_value "$RELEASE_FILE" "$1" || printf 'unknown'; }
+osrel() { kv_value "$OS_RELEASE_FILE" "$1" || printf 'unknown'; }
+
+live_mode() { grep -qw 'boot=live' "$CMDLINE_FILE" 2>/dev/null; }
+
+as_root() {
+    if (( EUID == 0 )); then
+        "$@"
+    elif have sudo; then
+        sudo "$@"
+    else
+        die "$EX_DEPS" "this step needs root and sudo is not installed"
+    fi
+}
+
+ask() {
+    local prompt=$1 reply
+    if [[ ! -t 0 ]]; then
+        warn "no interactive terminal, not asking: $prompt"
+        return 1
+    fi
+    read -r -p "$prompt [y/N] " reply || return 1
+    [[ $reply == [yY] || $reply == [yY][eE][sS] ]]
+}
+
+confirm() {
+    (( ASSUME_YES )) && return 0
+    ask "$1"
+}
+
+row() { printf '  %s%-16s%s %s\n' "$C_DIM" "$1" "$C_OFF" "$2"; }
+
+heading() { printf '\n%s%s%s\n' "$C_BLD" "$1" "$C_OFF"; }
+
+mem_kb() { awk -v k="$1:" '$1 == k { print $2 }' /proc/meminfo; }
+
+fmt_kb() {
+    awk -v kb="${1:-0}" 'BEGIN {
+        if (kb >= 1048576) printf "%.1f GiB", kb / 1048576;
+        else printf "%.0f MiB", kb / 1024
+    }'
+}
+
+uptime_text() {
+    local secs d h m
+    secs=$(cut -d. -f1 /proc/uptime)
+    d=$((secs / 86400)); h=$(((secs % 86400) / 3600)); m=$(((secs % 3600) / 60))
+    if (( d > 0 )); then printf '%dd %dh %dm' "$d" "$h" "$m"
+    elif (( h > 0 )); then printf '%dh %dm' "$h" "$m"
+    else printf '%dm' "$m"; fi
+}
+
+cpu_model() {
+    awk -F: '/^model name/ { sub(/^ +/, "", $2); print $2; exit }' /proc/cpuinfo
+}
+
+print_banner() {
+    printf '%s' "$C_RED"
+    cat <<'ART'
+  ██      ██
+   ██    ██
+    ██  ██
+     ████
+      ██
+ART
+    printf '%s' "$C_OFF"
+}
+
+cmd_banner() {
+    print_banner
+    printf '  %sCindraOS%s %s %s%s · %s%s\n' "$C_BLD" "$C_OFF" "$(rel VERSION)" "$C_DIM" "$(rel EDITION)" "$(rel STATUS)" "$C_OFF"
+    printf "  %sType 'cindra help' to see what the system can do.%s\n\n" "$C_DIM" "$C_OFF"
+}
+
+cmd_help() {
+    cat <<'HELP'
+Usage: cindra [--yes] [--no-color] <command> [options]
+
+System information
+  help          show this overview
+  version       print version and edition (--short for the number only)
+  info          CindraOS overview
+  sys           kernel, architecture, memory and uptime
+  checkup       check the important system components
+  desktop       desktop environment and its current state
+
+Maintenance
+  update        refresh package lists, optionally upgrade
+  clean         show and remove the package cache and unused packages
+  repair        read-only diagnostics, repairs only after confirmation
+  logs          system logs: [errors|boot|kernel|unit NAME] [-n LINES]
+  network       diagnose the network (--offline skips outside checks)
+
+Customisation
+  theme         list themes, 'theme set NAME' to switch, 'theme current'
+  about         about the project
+  report        write an anonymised diagnostic report [-o FILE]
+  banner        print the startup banner
+
+Options
+  -y, --yes     answer yes to update/clean prompts (never applies to repair)
+  --no-color    disable colored output
+
+Exit codes: 0 ok, 1 failure, 2 usage error, 3 missing dependency
+HELP
+}
+
+cmd_version() {
+    case ${1:-} in
+        "")      say "CindraOS $(rel VERSION) $(rel EDITION) Edition ($(rel STATUS))" ;;
+        --short) say "$(rel VERSION)" ;;
+        *)       die "$EX_USAGE" "version: unknown option '$1'" ;;
+    esac
+}
+
+cmd_info() {
+    [[ -r $RELEASE_FILE ]] || die "$EX_FAIL" "cannot read $RELEASE_FILE"
+    local debver=n/a
+    [[ -r /etc/debian_version ]] && debver=$(< /etc/debian_version)
+    print_banner
+    printf '\n'
+    row "System"       "$(osrel PRETTY_NAME)"
+    row "Base"         "$(rel BASE) [$debver]"
+    row "Build"        "$(rel BUILD_DATE)"
+    row "Kernel"       "$(uname -r)"
+    row "Architecture" "$(uname -m)"
+    row "Host"         "$(uname -n)"
+    row "User"         "${USER:-$(id -un)}"
+    row "Shell"        "$(basename "${SHELL:-unknown}")"
+    row "Desktop"      "${XDG_CURRENT_DESKTOP:-none (no graphical session)}"
+    row "Memory"       "$(fmt_kb "$(mem_kb MemAvailable)") free of $(fmt_kb "$(mem_kb MemTotal)")"
+    row "Uptime"       "$(uptime_text)"
+    if live_mode; then
+        row "Session" "live (nothing is written to disk, changes vanish on reboot)"
+    else
+        row "Session" "installed or non-live boot"
+    fi
+}
+
+cmd_sys() {
+    heading "Kernel"
+    row "Release"      "$(uname -r)"
+    row "Version"      "$(uname -v)"
+    row "Architecture" "$(uname -m)"
+    heading "CPU"
+    row "Model"        "$(cpu_model)"
+    row "Threads"      "$(nproc 2>/dev/null || grep -c '^processor' /proc/cpuinfo)"
+    row "Load"         "$(cut -d' ' -f1-3 /proc/loadavg)"
+    heading "Memory"
+    row "Total"        "$(fmt_kb "$(mem_kb MemTotal)")"
+    row "Available"    "$(fmt_kb "$(mem_kb MemAvailable)")"
+    row "Swap"         "$(fmt_kb "$(mem_kb SwapTotal)") total, $(fmt_kb "$(mem_kb SwapFree)") free"
+    heading "Runtime"
+    row "Uptime"       "$(uptime_text)"
+    row "Boot cmdline" "$(cut -c1-70 "$CMDLINE_FILE" 2>/dev/null || echo unavailable)"
+    heading "Root filesystem"
+    if have df; then
+        df -h / | sed 's/^/  /'
+    else
+        warn "df not available, skipping filesystem usage"
+    fi
+}
+
+CHECK_OK=0
+CHECK_WARN=0
+CHECK_FAIL=0
+
+check() {
+    local state=$1 label=$2 detail=${3:-}
+    case $state in
+        ok)   CHECK_OK=$((CHECK_OK + 1));     printf '  %s[ ok ]%s %s' "$C_GRN" "$C_OFF" "$label" ;;
+        warn) CHECK_WARN=$((CHECK_WARN + 1)); printf '  %s[warn]%s %s' "$C_YEL" "$C_OFF" "$label" ;;
+        fail) CHECK_FAIL=$((CHECK_FAIL + 1)); printf '  %s[FAIL]%s %s' "$C_RED" "$C_OFF" "$label" ;;
+    esac
+    [[ -n $detail ]] && printf ' %s(%s)%s' "$C_DIM" "$detail" "$C_OFF"
+    printf '\n'
+}
+
+unit_active() { systemctl is-active --quiet "$1" 2>/dev/null; }
+systemd_up()  { have systemctl && [[ -d /run/systemd/system ]]; }
+
+cmd_checkup() {
+    say "CindraOS checkup"
+
+    heading "Identity"
+    local id
+    id=$(osrel ID)
+    if [[ $id == cindra ]]; then check ok "os-release identifies CindraOS"
+    else check warn "os-release ID is '$id', expected 'cindra'"; fi
+    if [[ -r $RELEASE_FILE ]]; then check ok "release file readable" "$RELEASE_FILE"
+    else check fail "release file missing" "$RELEASE_FILE"; fi
+
+    heading "Resources"
+    local avail pct
+    avail=$(mem_kb MemAvailable)
+    if (( avail >= 512 * 1024 )); then check ok "memory available" "$(fmt_kb "$avail")"
+    elif (( avail >= 192 * 1024 )); then check warn "memory is getting low" "$(fmt_kb "$avail")"
+    else check fail "memory critically low" "$(fmt_kb "$avail")"; fi
+    pct=$(df -P / 2>/dev/null | awk 'NR == 2 { gsub("%", "", $5); print $5 }')
+    if [[ -z $pct ]]; then check warn "could not read root filesystem usage"
+    elif (( pct < 90 )); then check ok "root filesystem usage" "${pct}%"
+    elif (( pct < 97 )); then check warn "root filesystem filling up" "${pct}%"
+    else check fail "root filesystem almost full" "${pct}%"; fi
+
+    heading "System services"
+    if systemd_up; then
+        local state u
+        state=$(systemctl is-system-running 2>/dev/null || true)
+        case $state in
+            running)  check ok "systemd state" "running" ;;
+            degraded) check warn "systemd state" "degraded, see 'cindra repair'" ;;
+            *)        check warn "systemd state" "${state:-unknown}" ;;
+        esac
+        for u in NetworkManager lightdm dbus; do
+            if unit_active "$u"; then check ok "service $u active"
+            else check warn "service $u not active"; fi
+        done
+    else
+        check warn "systemd is not running, service checks skipped"
+    fi
+
+    heading "Desktop"
+    if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]]; then
+        local p
+        for p in xfwm4 xfce4-panel xfdesktop; do
+            if pgrep -x "$p" >/dev/null 2>&1; then check ok "$p running"
+            else check warn "$p not running"; fi
+        done
+    else
+        check ok "no graphical session in this shell, desktop checks skipped"
+    fi
+
+    heading "Packages and network"
+    if have dpkg; then
+        if [[ -z $(dpkg --audit 2>&1) ]]; then check ok "dpkg database consistent"
+        else check fail "dpkg reports broken packages" "run 'cindra repair'"; fi
+    else
+        check warn "dpkg not found"
+    fi
+    if have ip && [[ -n $(ip route show default 2>/dev/null) ]]; then check ok "default route present"
+    else check warn "no default route, network may be down"; fi
+    if have sudo; then check ok "sudo installed"; else check warn "sudo missing"; fi
+
+    heading "Session"
+    if live_mode; then check ok "live session" "changes are lost on reboot"
+    else check ok "not a live session"; fi
+
+    printf '\nSummary: %d ok, %d warnings, %d failures\n' "$CHECK_OK" "$CHECK_WARN" "$CHECK_FAIL"
+    (( CHECK_FAIL == 0 ))
+}
+
+cmd_desktop() {
+    heading "Session"
+    row "Desktop"      "${XDG_CURRENT_DESKTOP:-not set}"
+    row "Session type" "${XDG_SESSION_TYPE:-not set}"
+    row "Display"      "${DISPLAY:-${WAYLAND_DISPLAY:-none}}"
+
+    heading "Components"
+    local c lower
+    for c in xfce4-session xfwm4 xfce4-panel xfdesktop Thunar xfce4-terminal; do
+        lower=${c,,}
+        if pgrep -x "$c" >/dev/null 2>&1; then
+            row "$c" "running"
+        elif have "$c" || have "$lower"; then
+            row "$c" "installed, not running"
+        else
+            row "$c" "not installed"
+        fi
+    done
+    if systemd_up; then
+        row "lightdm" "$(systemctl is-active lightdm 2>/dev/null || echo inactive)"
+    fi
+
+    heading "Appearance"
+    if have xfconf-query && [[ -n ${DBUS_SESSION_BUS_ADDRESS:-} ]]; then
+        row "GTK theme"    "$(xfconf-query -c xsettings -p /Net/ThemeName 2>/dev/null || echo unknown)"
+        row "Icon theme"   "$(xfconf-query -c xsettings -p /Net/IconThemeName 2>/dev/null || echo unknown)"
+        row "Window theme" "$(xfconf-query -c xfwm4 -p /general/theme 2>/dev/null || echo unknown)"
+    else
+        row "Theme info" "unavailable (needs xfconf-query and a running session bus)"
+    fi
+    if have xrandr && [[ -n ${DISPLAY:-} ]]; then
+        heading "Screens"
+        xrandr --query 2>/dev/null | awk '/ connected/ { print "  " $1, $3 }'
+    fi
+}
+
+cmd_update() {
+    require apt-get apt
+    live_mode && warn "live session: upgraded packages live in RAM and disappear on reboot"
+    say "Refreshing package lists..."
+    as_root apt-get update || die "$EX_FAIL" "apt-get update failed (try 'cindra network')"
+    local list count shown=40
+    list=$(apt list --upgradable 2>/dev/null | sed 1d)
+    if [[ -z $list ]]; then
+        say "Everything is up to date."
+        return 0
+    fi
+    count=$(printf '%s\n' "$list" | wc -l)
+    say "$count package(s) can be upgraded:"
+    printf '%s\n' "$list" | head -n "$shown" | sed 's/^/  /'
+    (( count > shown )) && say "  ... and $((count - shown)) more"
+    if confirm "Run the upgrade now?"; then
+        as_root apt-get upgrade -y || die "$EX_FAIL" "apt-get upgrade failed"
+        say "Upgrade finished."
+    else
+        say "Package lists refreshed, nothing upgraded."
+    fi
+}
+
+cmd_clean() {
+    require apt-get du find
+    local dir=/var/cache/apt/archives debs size removable
+    debs=$(find "$dir" -maxdepth 1 -name '*.deb' 2>/dev/null)
+    size=$(du -sh "$dir" 2>/dev/null | cut -f1)
+    say "APT cache: ${size:-unknown} in $dir"
+    if [[ -n $debs ]]; then
+        printf '%s\n' "$debs" | sed 's|.*/|  |' | head -n 30
+    else
+        say "  no cached packages"
+    fi
+    removable=$(apt-get -s autoremove 2>/dev/null | awk '/^Remv / { print $2 }')
+    if [[ -n $removable ]]; then
+        say
+        say "Unused packages autoremove would delete:"
+        printf '%s\n' "$removable" | sed 's/^/  /'
+    else
+        say "No unused packages."
+    fi
+    if [[ -z $debs && -z $removable ]]; then
+        say "Nothing to clean."
+        return 0
+    fi
+    if [[ -n $debs ]] && confirm "Delete the cached package files?"; then
+        as_root apt-get clean || die "$EX_FAIL" "apt-get clean failed"
+        say "Package cache cleared."
+    fi
+    if [[ -n $removable ]] && confirm "Remove the unused packages listed above?"; then
+        as_root apt-get autoremove -y || die "$EX_FAIL" "apt-get autoremove failed"
+    fi
+}
+
+cmd_repair() {
+    require dpkg apt-get
+    local problems=0 audit aptmsg failed="" nm_down=0
+    say "Diagnostics (read-only)"
+
+    audit=$(dpkg --audit 2>&1)
+    if [[ -z $audit ]]; then
+        say "  [ok]      dpkg database consistent"
+    else
+        problems=$((problems + 1))
+        say "  [problem] dpkg reports unfinished or broken packages:"
+        printf '%s\n' "$audit" | sed 's/^/              /'
+    fi
+
+    if aptmsg=$(apt-get check 2>&1); then
+        say "  [ok]      apt dependency check"
+    else
+        problems=$((problems + 1))
+        say "  [problem] apt-get check failed:"
+        printf '%s\n' "$aptmsg" | tail -n 5 | sed 's/^/              /'
+    fi
+
+    if systemd_up; then
+        failed=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{ print $1 }')
+        if [[ -z $failed ]]; then
+            say "  [ok]      no failed systemd units"
+        else
+            problems=$((problems + 1))
+            say "  [problem] failed units: $(echo $failed)"
+        fi
+        if systemctl cat NetworkManager.service >/dev/null 2>&1 && ! unit_active NetworkManager; then
+            nm_down=1
+            problems=$((problems + 1))
+            say "  [problem] NetworkManager is not running"
+        fi
+    else
+        say "  [skip]    systemd not running"
+    fi
+
+    if [[ $(osrel ID) != cindra ]]; then
+        say "  [note]    os-release does not identify CindraOS (not repaired automatically)"
+    fi
+
+    if (( problems == 0 )); then
+        say "No problems found."
+        return 0
+    fi
+    if [[ ! -t 0 ]]; then
+        die "$EX_FAIL" "problems found, but repairs need an interactive terminal"
+    fi
+
+    say
+    say "Repairs (each one asks first):"
+    if [[ -n $audit ]] && ask "Run 'dpkg --configure -a'?"; then
+        as_root dpkg --configure -a || warn "dpkg --configure -a reported errors"
+    fi
+    if ! apt-get check >/dev/null 2>&1 && ask "Run 'apt-get install -f' to fix dependencies?"; then
+        as_root apt-get install -f || warn "apt-get install -f reported errors"
+    fi
+    if [[ -n $failed ]] && ask "Clear the failed state of those units (does not restart them)?"; then
+        as_root systemctl reset-failed || warn "reset-failed did not succeed"
+    fi
+    if (( nm_down )) && ask "Start NetworkManager?"; then
+        as_root systemctl start NetworkManager || warn "could not start NetworkManager"
+    fi
+    say "Done. Run 'cindra checkup' to see where things stand."
+}
+
+cmd_logs() {
+    require journalctl
+    local lines=80 mode=errors unit=""
+    while (( $# )); do
+        case $1 in
+            -n|--lines)
+                [[ ${2:-} =~ ^[0-9]+$ ]] || die "$EX_USAGE" "logs: $1 needs a number"
+                lines=$2; shift 2 ;;
+            errors|boot|kernel) mode=$1; shift ;;
+            unit)
+                [[ -n ${2:-} ]] || die "$EX_USAGE" "logs: unit needs a service name"
+                mode=unit; unit=$2; shift 2 ;;
+            *) die "$EX_USAGE" "logs: unknown argument '$1'" ;;
+        esac
+    done
+
+    local args=(--no-pager -n "$lines")
+    case $mode in
+        errors) args+=(-b -p warning) ;;
+        boot)   args+=(-b) ;;
+        kernel) args+=(-k -b) ;;
+        unit)   args+=(-u "$unit") ;;
+    esac
+
+    local out rc=0
+    out=$(journalctl "${args[@]}" 2>&1) || rc=$?
+    if (( rc != 0 )) || [[ $out == *"insufficient permissions"* ]]; then
+        if (( EUID != 0 )) && have sudo; then
+            out=$(sudo journalctl "${args[@]}" 2>&1) || die "$EX_FAIL" "journalctl failed: $out"
+        else
+            die "$EX_FAIL" "journalctl failed: $out"
+        fi
+    fi
+    printf '%s\n' "$out"
+}
+
+NET_FAILS=0
+
+net_line() {
+    local state=$1 label=$2 detail=${3:-}
+    case $state in
+        ok)   printf '  %s[ ok ]%s %s' "$C_GRN" "$C_OFF" "$label" ;;
+        bad)  printf '  %s[FAIL]%s %s' "$C_RED" "$C_OFF" "$label"; NET_FAILS=$((NET_FAILS + 1)) ;;
+        skip) printf '  %s[skip]%s %s' "$C_DIM" "$C_OFF" "$label" ;;
+    esac
+    [[ -n $detail ]] && printf ' %s(%s)%s' "$C_DIM" "$detail" "$C_OFF"
+    printf '\n'
+}
+
+cmd_network() {
+    local offline=0
+    case ${1:-} in
+        "")        ;;
+        --offline) offline=1 ;;
+        *)         die "$EX_USAGE" "network: unknown option '$1'" ;;
+    esac
+    require ip
+
+    heading "Interfaces"
+    ip -br addr | sed 's/^/  /'
+
+    heading "Manager"
+    if have nmcli; then
+        nmcli -t -f DEVICE,TYPE,STATE device 2>/dev/null | awk -F: '{ printf "  %-14s %-10s %s\n", $1, $2, $3 }'
+    else
+        say "  nmcli not installed, NetworkManager details unavailable"
+    fi
+    if have rfkill && rfkill list 2>/dev/null | grep -qi 'blocked: yes'; then
+        warn "a radio device is blocked, see 'rfkill list'"
+    fi
+
+    heading "Connectivity"
+    local gw ns
+    gw=$(ip route show default 2>/dev/null | awk 'NR == 1 { for (i = 1; i < NF; i++) if ($i == "via") { print $(i + 1); exit } }')
+    if [[ -z $gw ]]; then
+        net_line bad "default gateway" "none, no route out of this machine"
+    else
+        net_line ok "default gateway" "$gw"
+        if have ping; then
+            if ping -c1 -W2 "$gw" >/dev/null 2>&1; then net_line ok "gateway reachable"
+            else net_line bad "gateway did not answer ping"; fi
+        else
+            net_line skip "gateway ping" "ping not installed"
+        fi
+    fi
+    ns=$(awk '/^nameserver/ { printf "%s ", $2 }' /etc/resolv.conf 2>/dev/null)
+    if [[ -n $ns ]]; then net_line ok "DNS servers" "${ns% }"
+    else net_line bad "DNS servers" "none in /etc/resolv.conf"; fi
+
+    if (( offline )); then
+        net_line skip "outside checks" "--offline"
+    else
+        if have getent; then
+            if getent hosts deb.debian.org >/dev/null 2>&1; then net_line ok "resolve deb.debian.org"
+            else net_line bad "resolve deb.debian.org" "DNS lookup failed"; fi
+        fi
+        if have curl; then
+            if curl -sSI --max-time 8 https://deb.debian.org/ >/dev/null 2>&1; then net_line ok "HTTPS to deb.debian.org"
+            else net_line bad "HTTPS to deb.debian.org" "no response in 8s"; fi
+        else
+            net_line skip "HTTPS check" "curl not installed"
+        fi
+    fi
+
+    if (( NET_FAILS > 0 )); then
+        printf '\n%d check(s) failed.\n' "$NET_FAILS"
+        return 1
+    fi
+    printf '\nNetwork looks fine.\n'
+}
+
+theme_file() { printf '%s/themes/%s.theme' "$SHARE_DIR" "$1"; }
+
+current_gtk_theme() {
+    have xfconf-query && [[ -n ${DBUS_SESSION_BUS_ADDRESS:-} ]] || return 1
+    xfconf-query -c xsettings -p /Net/ThemeName 2>/dev/null
+}
+
+cmd_theme() {
+    local sub=${1:-list}
+    case $sub in
+        list)
+            local dir=$SHARE_DIR/themes f id mark cur="" found=0
+            cur=$(current_gtk_theme) || cur=""
+            for f in "$dir"/*.theme; do
+                [[ -e $f ]] || continue
+                found=1
+                id=$(basename "$f" .theme)
+                mark=" "
+                [[ -n $cur && $(kv_value "$f" GTK) == "$cur" ]] && mark="*"
+                printf ' %s %-16s %s\n' "$mark" "$id" "$(kv_value "$f" DESCRIPTION)"
+            done
+            (( found )) || die "$EX_FAIL" "no theme profiles found in $dir"
+            ;;
+        current)
+            current_gtk_theme || die "$EX_FAIL" "cannot read the current theme (needs xfconf-query and a session)"
+            ;;
+        set)
+            local name=${2:-} f gtk icons wm
+            [[ -n $name ]] || die "$EX_USAGE" "theme set: give a theme name (see 'cindra theme')"
+            f=$(theme_file "$name")
+            [[ -r $f ]] || die "$EX_USAGE" "unknown theme '$name'"
+            require xfconf-query
+            [[ -n ${DBUS_SESSION_BUS_ADDRESS:-} ]] || die "$EX_FAIL" "no session bus, run this inside the desktop session"
+            gtk=$(kv_value "$f" GTK); icons=$(kv_value "$f" ICONS); wm=$(kv_value "$f" WM)
+            [[ -d /usr/share/themes/$gtk || -d $HOME/.themes/$gtk ]] || warn "GTK theme '$gtk' not found on disk"
+            xfconf-query -c xsettings -p /Net/ThemeName -n -t string -s "$gtk" || die "$EX_FAIL" "could not set the GTK theme"
+            xfconf-query -c xsettings -p /Net/IconThemeName -n -t string -s "$icons" || die "$EX_FAIL" "could not set the icon theme"
+            xfconf-query -c xfwm4 -p /general/theme -n -t string -s "$wm" || die "$EX_FAIL" "could not set the window theme"
+            say "Theme set to $name."
+            ;;
+        *) die "$EX_USAGE" "theme: unknown subcommand '$sub'" ;;
+    esac
+}
+
+cmd_about() {
+    print_banner
+    printf '\n  %sCindraOS %s%s  %s%s Edition, %s%s\n\n' "$C_BLD" "$(rel VERSION)" "$C_OFF" "$C_DIM" "$(rel EDITION)" "$(rel STATUS)" "$C_OFF"
+    row "Author"   "$(rel AUTHOR)"
+    row "Website"  "$(rel WEBSITE)"
+    row "GitHub"   "$(rel GITHUB)"
+    row "License"  "$(rel LICENSE) (CindraOS files; Debian packages keep their own licenses)"
+    row "Built on" "$(rel BASE)"
+    say
+    say "  CindraOS is a Debian-based distribution. The kernel and nearly all software"
+    say "  come from Debian; branding, desktop configuration and the cindra tool are ours."
+}
+
+regex_escape() { printf '%s' "$1" | sed 's/[][\.*^$/|+?(){}]/\\&/g'; }
+
+anonymize() {
+    local host user home
+    host=$(uname -n); user=${USER:-$(id -un)}; home=${HOME:-/nonexistent}
+    local expr=()
+    (( ${#home} > 1 ))   && expr+=(-e "s|$(regex_escape "$home")|<home>|g")
+    (( ${#host} >= 3 ))  && expr+=(-e "s|$(regex_escape "$host")|<host>|g")
+    (( ${#user} >= 3 ))  && expr+=(-e "s|\\b$(regex_escape "$user")\\b|<user>|g")
+    sed -E "${expr[@]}" \
+        -e 's/([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}/xx:xx:xx:xx:xx:xx/g' \
+        -e 's/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/x.x.x.x/g' \
+        -e 's/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/<uuid>/g' \
+        -e 's/([0-9a-fA-F]{1,4}:){3,7}[0-9a-fA-F]{1,4}/<ipv6>/g'
+}
+
+collect_report() {
+    echo "CindraOS diagnostic report"
+    echo "generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo
+    echo "[release]"
+    cat "$RELEASE_FILE" 2>/dev/null || echo "release file unreadable"
+    echo
+    echo "[system]"
+    echo "kernel: $(uname -r)"
+    echo "arch: $(uname -m)"
+    echo "cpu: $(cpu_model)"
+    echo "memory total: $(fmt_kb "$(mem_kb MemTotal)")"
+    echo "memory available: $(fmt_kb "$(mem_kb MemAvailable)")"
+    echo "uptime: $(uptime_text)"
+    echo "live session: $(live_mode && echo yes || echo no)"
+    echo "desktop: ${XDG_CURRENT_DESKTOP:-none}"
+    echo
+    echo "[boot parameters]"
+    cat "$CMDLINE_FILE" 2>/dev/null || echo unavailable
+    echo
+    echo "[filesystems]"
+    have df && df -hT -x tmpfs -x devtmpfs 2>/dev/null
+    echo
+    if systemd_up; then
+        echo "[failed units]"
+        systemctl --failed --no-legend --plain 2>/dev/null
+        echo
+    fi
+    if have lspci; then
+        echo "[pci devices]"
+        lspci -nn 2>/dev/null | sed 's/^[0-9a-f:.]* //'
+        echo
+    fi
+    if have journalctl; then
+        echo "[journal warnings, current boot, last 60]"
+        journalctl -b -p warning -n 60 --no-pager 2>&1
+        echo
+    fi
+    if have dpkg; then
+        echo "[packages]"
+        echo "installed: $(dpkg-query -f '.\n' -W 2>/dev/null | wc -l)"
+        echo "audit: $(dpkg --audit 2>&1 | head -n 5)"
+    fi
+}
+
+cmd_report() {
+    local out=""
+    case ${1:-} in
+        "") ;;
+        -o) [[ -n ${2:-} ]] || die "$EX_USAGE" "report: -o needs a file name"; out=$2 ;;
+        *)  die "$EX_USAGE" "report: unknown option '$1'" ;;
+    esac
+    [[ -n $out ]] || out="${CINDRA_REPORT_DIR:-${HOME:-.}}/cindra-report-$(date +%Y%m%d-%H%M%S).txt"
+
+    local tmp
+    tmp=$(mktemp) || die "$EX_FAIL" "cannot create a temporary file"
+    collect_report 2>&1 | anonymize >"$tmp"
+    if ! install -m 600 "$tmp" "$out"; then
+        rm -f "$tmp"
+        die "$EX_FAIL" "cannot write $out"
+    fi
+    rm -f "$tmp"
+    say "Report written to $out"
+    say "Hostname, user name, home path, MAC/IP addresses and UUIDs were masked."
+    say "Nothing was sent anywhere. Read the file before you share it."
+}
+
+main() {
+    while (( $# )); do
+        case $1 in
+            -y|--yes)   ASSUME_YES=1; shift ;;
+            --no-color) C_RED="" C_GRN="" C_YEL="" C_DIM="" C_BLD="" C_OFF=""; shift ;;
+            *)          break ;;
+        esac
+    done
+
+    local cmd=${1:-help}
+    (( $# )) && shift
+
+    case $cmd in
+        help|-h|--help)       cmd_help ;;
+        version|-V|--version) cmd_version "$@" ;;
+        info)                 cmd_info ;;
+        sys)                  cmd_sys ;;
+        checkup)              cmd_checkup ;;
+        desktop)              cmd_desktop ;;
+        update)               cmd_update ;;
+        clean)                cmd_clean ;;
+        repair)               cmd_repair ;;
+        logs)                 cmd_logs "$@" ;;
+        network)              cmd_network "$@" ;;
+        theme)                cmd_theme "$@" ;;
+        about)                cmd_about ;;
+        report)               cmd_report "$@" ;;
+        banner)               cmd_banner ;;
+        *)
+            printf "cindra: unknown command '%s'\n" "$cmd" >&2
+            printf "Run 'cindra help' for the list of commands.\n" >&2
+            exit "$EX_USAGE"
+            ;;
+    esac
+}
+
+main "$@"

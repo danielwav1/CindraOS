@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Web Browser
+Exec=firefox-esr
+Icon=web-browser
+StartupNotify=true
+Terminal=false

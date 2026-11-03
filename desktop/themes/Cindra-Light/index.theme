@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=Cindra-Light
+Comment=CindraOS Light theme with red accents, built on Arc
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=Cindra-Light
+MetacityTheme=Cindra-Light
+IconTheme=Papirus
