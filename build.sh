@@ -209,6 +209,7 @@ stage() {
     put "$ROOT/assets/wallpaper/cindra-default.png" "$inc/usr/share/backgrounds/cindra/cindra-default.png" 644
     put "$ROOT/assets/wallpaper/cindra-default.svg" "$inc/usr/share/backgrounds/cindra/cindra-default.svg" 644
 
+    put_tree "$ROOT/assets/icons/Cindra-Icons" "$inc/usr/share/icons/Cindra-Icons"
     put_tree "$ROOT/desktop/xfce/xdg" "$inc/etc/xdg"
     put_tree "$ROOT/desktop/xfce/skel" "$inc/etc/skel"
     put "$ROOT/desktop/shell/skel-bashrc" "$inc/etc/skel/.bashrc" 644
