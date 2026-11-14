@@ -1,56 +1,54 @@
-# Testing
+# Testing CindraOS
 
+Run the local automated tests:
+
+```bash
+bash tests/run.sh
 ```
-bash tests/run.sh          # automated tests
-bash tests/run.sh --vm     # plus the live boot test (needs qemu-system-x86_64 and xorriso)
+
+After building an ISO, run the deep image check and QEMU boot test:
+
+```bash
+bash verify-iso.sh --deep out/CindraOS-1.0.0-live-amd64.iso
+bash tests/vm-boot.sh out/CindraOS-1.0.0-live-amd64.iso
 ```
 
-None of the tests write to real block devices. The report test writes to a temp directory.
-The VM test attaches the ISO read-only as a CD-ROM and no disks at all.
+The VM test attaches the ISO as a read-only CD-ROM and does not attach a writable virtual disk.
 
-## Automated tests
+## Automated test coverage
 
-| File | Covers |
+| Test | Coverage |
 |---|---|
-| `test_cli.sh` | help, version, info, sys, checkup, desktop, unknown command (exit 2), missing dependency (exit 3), theme listing and errors, report masking, clean/repair without a terminal |
-| `test_config.sh` | `bash -n` and `py_compile`, XML validity, os-release and release file, package list rules, no installer, autologin user, terminal palette, theme files, xfwm4 generator |
-| `test_assets.sh` | SVG validity, PNG sizes, red logo / monochrome logos, wallpaper, branding files |
-| `test_iso.sh` | runs `verify-iso.sh` on an existing ISO, skipped when none exists |
-| `vm-boot.sh` | boots the ISO's kernel/initrd with the ISO attached, waits for the login prompt on the serial console |
+| `test_assets.sh` | SVG validity, PNG dimensions, logos, wallpaper and branding files |
+| `test_config.sh` | Shell syntax, Python compilation, XML, release metadata, package-list rules, live configuration and theme assets |
+| `test_cli.sh` | CLI commands, exit codes, missing dependencies, theme handling, report creation and identifier masking |
+| `test_iso.sh` | ISO verification when an image is available |
+| `vm-boot.sh` | Boots the built live image in QEMU and waits for the login prompt |
 
-### Result of the last run
+The test runner treats missing summaries and unexpected test-script failures as failures. A skipped ISO test before an image exists is expected during the pre-build test stage.
 
-Run on Ubuntu 24.04 (x86_64, no systemd, no network, no live-build):
+## Stable build pipeline
 
-```
-Total: 141 passed, 0 failed, 1 skipped
-```
+GitHub Actions runs the tests and package validation before building. It then verifies the ISO contents and boots the image in QEMU. The workflow must complete successfully before its artifact is considered a verified CI build.
 
-The skipped test is the ISO check: no ISO exists yet. The VM test was not run.
+## Manual hardware validation
 
-Not covered by these runs: `update`, `repair` (with confirmations), `network` with
-connectivity, `theme set` and `desktop` inside a real XFCE session, `logs` against a
-real journal. They need a running CindraOS system.
+QEMU testing does not replace testing on physical devices. Record the exact machine and result when performing these checks:
 
-## Manual tests (to do on a built image)
+- [ ] Boot from USB in legacy BIOS mode
+- [ ] Boot from USB in UEFI mode
+- [ ] Reach the XFCE desktop after automatic login
+- [ ] Confirm the Cindra wallpaper, panel, launchers and tray
+- [ ] Confirm window decorations and both theme profiles
+- [ ] Run `cindra checkup`
+- [ ] Test wired and wireless networking on the device
+- [ ] Test audio input and output
+- [ ] Launch Firefox ESR
+- [ ] Confirm internal disks are not automatically modified
+- [ ] Confirm the live session resets after reboot
 
-- [ ] ISO boots in a VM (BIOS mode)
-- [ ] ISO boots in a VM with OVMF (UEFI mode)
-- [ ] ISO boots from a USB stick on at least one real machine
-- [ ] Boot menu shows the CindraOS name
-- [ ] Auto-login reaches the XFCE desktop, wallpaper with red V is shown
-- [ ] Panel: menu button shows the red V, launchers, tray, volume, power, clock, session menu
-- [ ] Window decorations match the theme (red edge on the active window, buttons work)
-- [ ] `cindra theme set cindra-light` and back to `cindra-dark`
-- [ ] Terminal: banner appears once, prompt shows user@host:dir, exit code shows after a failing command
-- [ ] `cindra checkup` has no failures; `cindra network` works with a connection
-- [ ] `cindra update` refreshes lists; `cindra clean` and `cindra repair` ask before changing anything
-- [ ] Wi-Fi works with `network-manager-gnome`; sound plays; screenshot tool works
-- [ ] Firefox starts and loads a page
-- [ ] `ss -tulpn` shows no listening services besides the DHCP client
-- [ ] Internal disk is not mounted after boot; mounting it asks for authentication
-- [ ] `cat /etc/os-release` shows CindraOS; `cindra info` shows the right base version
-- [ ] After reboot all changes are gone
+## Not covered automatically
 
-Record the result of each box with the hardware or VM used. Nothing in this project
-claims that every hardware configuration has been tested.
+The automated tests do not fully validate every GPU, Wi-Fi adapter, sound device, suspend/resume path, physical USB controller, or firmware implementation. They also do not establish that all optional CLI operations work correctly on every physical system.
+
+When reporting a bug, include the device model and relevant error messages. You may attach `cindra report`, but inspect the report first because automated masking cannot guarantee removal of every personal detail.
