@@ -1,156 +1,162 @@
 # CindraOS
 
-A Debian-based live Linux with a red C-mark, a dark XFCE desktop and its own command line tool, `cindra`. Boot it from a USB stick, use it, shut down, and your disks are untouched.
+**Your system. Your way.**
 
-> **Experimental version 0.4.0 (Live Edition).** Not every hardware configuration has been tested. Expect rough edges and please report problems.
+CindraOS 1.0.0 is a Debian 13 (Trixie)-based live Linux distribution with a customized XFCE desktop, a red-and-graphite visual identity, and the `cindra` command-line utility.
 
-[Download](https://github.com/danielwav1/CindraOS/releases/latest) · [Website](https://danielwav1.github.io/CindraOS) · [Issues](https://github.com/danielwav1/CindraOS/issues)
+CindraOS is a **live system**, not an installer. Boot it from a USB drive or in a virtual machine, try the desktop, and shut down. Changes made during the session are not saved unless you copy them to another drive.
 
-## Screenshots
+[Releases and downloads](https://github.com/danielwav1/CindraOS/releases) · [Project website](https://danielwav1.github.io/CindraOS) · [Issues](https://github.com/danielwav1/CindraOS/issues) · [Discussions](https://github.com/danielwav1/CindraOS/discussions)
 
-> *Placeholders. Add real screenshots to `docs/screenshots/`.*
+## CindraOS 1.0.0 Stable
 
-| | |
-|---|---|
-| `desktop.png` | Desktop with panel and wallpaper (placeholder) |
-| `terminal.png` | Terminal with the V banner (placeholder) |
-| `cindra-info.png` | `cindra info` (placeholder) |
+This is the first stable release of the CindraOS-branded live system. Stable describes the published project build and tested configuration; it does not mean every PC or peripheral has been tested. Please report hardware-specific problems with the diagnostic report from `cindra report`, after reviewing it for private information.
 
 ## Features
 
-- Live system for USB sticks and virtual machines, BIOS and UEFI
-- No installer, nothing is written to your disks
-- XFCE desktop with Cindra-Dark and Cindra-Light themes, red accent, own wallpaper and panel
-- File manager, text editor, screenshot tool, task manager, Firefox ESR
-- NetworkManager, PipeWire audio, power management
-- Terminal with a red C-mark banner, clear prompt and handy aliases
-- The `cindra` tool for system info, checks, updates, logs and network diagnosis
-- No telemetry and no hidden network services
+- Debian 13 Trixie base and Linux kernel from Debian
+- Hybrid amd64 live ISO for BIOS and UEFI systems
+- XFCE desktop with Cindra-Dark and Cindra-Light themes
+- Cindra wallpaper, logo, application icons, panel and terminal styling
+- LightDM desktop login
+- Thunar file manager, Mousepad editor, screenshot utility and task manager
+- Firefox ESR, NetworkManager and PipeWire audio
+- `cindra` utility for system information, checks, updates, logs, themes and diagnostics
+- No CindraOS telemetry or background reporting
 
-CindraOS is based on Debian 13 "trixie". The kernel, package manager and nearly all software come from Debian. See [docs/DEBIAN-COMPONENTS.md](docs/DEBIAN-COMPONENTS.md).
+Most operating-system components are Debian packages. CindraOS provides the branding, desktop configuration, build system, documentation and `cindra` utility. See [the component overview](docs/DEBIAN-COMPONENTS.md).
 
-## Requirements
+## System requirements
 
-| | |
+| Component | Requirement |
 |---|---|
-| CPU | 64-bit x86 (amd64). ARM and 32-bit are not supported |
-| RAM | 2 GB minimum, 4 GB or more recommended |
-| USB stick | 8 GB or larger |
-| Firmware | BIOS/legacy or UEFI. **Turn Secure Boot off** |
-| Network | Wi-Fi firmware for common Intel, Realtek and Atheros chips is included |
+| CPU | 64-bit x86 (amd64) |
+| RAM | 2 GB minimum; 4 GB or more recommended |
+| USB drive | 8 GB or larger |
+| Firmware | Legacy BIOS or UEFI |
+| Secure Boot | Not supported; disable it before booting |
+| Architecture | amd64 only |
 
-## Install on a USB stick
+Wi-Fi support depends on the hardware and available firmware. The included firmware covers a selection of common Intel, Realtek and Atheros devices, not every adapter.
 
-1. Download `CindraOS-0.4.0-live-amd64.iso` from the [Releases page](https://github.com/danielwav1/CindraOS/releases/latest). Optionally check it against the `.sha256` file:
-   ```
-   sha256sum -c CindraOS-0.4.0-live-amd64.iso.sha256
-   ```
-2. Flash it. **This erases the whole stick.**
+## Download and verify
 
-   | From | Tool | How |
-   |---|---|---|
-   | Android | [EtchDroid](https://etchdroid.app) | **Flash raw image**, select the `.iso`, needs a USB-OTG adapter |
-   | Windows | Rufus or balenaEtcher | In Rufus choose **DD Image mode** |
-   | Linux / macOS | `dd` | see below |
+Download the ISO and its SHA-256 checksum from the [GitHub Releases page](https://github.com/danielwav1/CindraOS/releases). Verify the image before writing it to a USB drive:
 
-   ```
-   lsblk
-   sudo dd if=CindraOS-0.4.0-live-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
-   ```
-   Replace `/dev/sdX` with your stick and double-check it with `lsblk`.
-
-## Boot
-
-1. Plug the stick into the PC and open the boot menu (usually F12, F10, Esc or F2 right after power-on).
-2. Choose the USB entry. If it doesn't appear, disable Secure Boot.
-3. CindraOS starts the desktop and logs in as `cindra` (password `cindra1`, needed for admin dialogs).
-
-Black screen? On the boot entry press `e`, add `nomodeset` to the kernel line and boot.
-
-To try it in a VM first:
-
-```
-qemu-system-x86_64 -m 3072 -smp 2 -enable-kvm -cdrom CindraOS-0.4.0-live-amd64.iso -boot d
+```bash
+sha256sum -c CindraOS-1.0.0-live-amd64.iso.sha256
 ```
 
-### Good to know
+The checksum file must be in the same directory as the ISO.
 
-- It is a live session. **Everything you change is lost when you shut down.** Save files to another drive.
-- Internal disks are not touched; mounting one asks for authentication.
-- `sudo` works without a password.
-- Login: user `cindra`, password `cindra1` (public, never reuse it elsewhere). The desktop logs in automatically.
-- The system runs from RAM, so large downloads or upgrades can fill it.
+## Create a bootable USB drive
 
-More in [docs/LIVE-SESSION.md](docs/LIVE-SESSION.md).
+**Writing the image erases the selected USB drive. Double-check the target device before continuing.**
+
+- **Windows:** use Rufus and select DD Image mode, or use balenaEtcher.
+- **Android:** use EtchDroid with a USB-OTG adapter and choose raw image mode.
+- **Linux:** identify the USB device with `lsblk`, then write the image:
+
+```bash
+lsblk
+sudo dd if=CindraOS-1.0.0-live-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+Replace `/dev/sdX` with the whole USB device, not a partition. Never copy the example device name without checking it.
+
+## Boot CindraOS
+
+1. Connect the USB drive and open the computer's boot menu.
+2. Select the USB device in BIOS or UEFI mode.
+3. Disable Secure Boot if the firmware blocks the image.
+4. The live desktop logs in automatically as `cindra`.
+
+The live account uses the public password `cindra1` for local administrative prompts. This is a shared live-session credential, not a secure personal account. Do not use the live environment for sensitive work or store private credentials in it.
+
+### Important live-session behavior
+
+- CindraOS does not install itself to an internal drive.
+- The live session is temporary. Changes are lost after shutdown or reboot.
+- Save anything you need to a separate drive.
+- The live environment runs from memory; large downloads and package upgrades can exhaust available RAM.
+- Mounting internal disks is a user action and may expose their contents.
+
+For virtual-machine testing, attach the ISO as a CD/DVD drive and allocate at least 2 GB RAM. A basic QEMU example:
+
+```bash
+qemu-system-x86_64 -m 3072 -smp 2 -cdrom CindraOS-1.0.0-live-amd64.iso -boot d
+```
 
 ## The `cindra` command
 
-Run `cindra help` for the overview. Options before the command: `-y/--yes` (answers yes in `update` and `clean`, never in `repair`) and `--no-color`.
+Run `cindra help` for the complete usage information.
 
-| Command | What it does |
+| Command | Purpose |
 |---|---|
-| `cindra help` | command overview |
-| `cindra version [--short]` | version and edition |
-| `cindra info` | system overview |
-| `cindra sys` | kernel, CPU, memory, swap, uptime, disk |
-| `cindra checkup` | checks the important system components |
-| `cindra desktop` | desktop session, components, active themes |
-| `cindra update` | refresh package lists, upgrade after confirmation |
-| `cindra clean` | show and remove the package cache and unused packages after confirmation |
-| `cindra repair` | read-only diagnostics, fixes only after confirmation |
-| `cindra logs [errors\|boot\|kernel\|unit NAME] [-n N]` | system logs |
-| `cindra network [--offline]` | interfaces, gateway, DNS and HTTPS check |
-| `cindra theme [list\|current\|set NAME]` | switch between `cindra-dark` and `cindra-light` |
-| `cindra about` | project information |
-| `cindra report [-o FILE]` | local diagnostic report with personal data masked; nothing is sent anywhere |
-| `cindra banner` | startup banner |
+| `cindra version` | Show version and edition |
+| `cindra info` | System overview |
+| `cindra sys` | Kernel, CPU, memory, swap, uptime and disk |
+| `cindra checkup` | Check important system components |
+| `cindra desktop` | Desktop session and appearance details |
+| `cindra update` | Refresh package lists and offer package upgrades |
+| `cindra clean` | Review and clean package caches |
+| `cindra repair` | Diagnose issues and offer confirmed fixes |
+| `cindra logs` | View system logs |
+| `cindra network` | Diagnose interfaces, gateway, DNS and HTTPS |
+| `cindra theme` | List or change CindraOS theme profiles |
+| `cindra report` | Write a local diagnostic report with common identifiers masked |
+| `cindra about` | Project and license information |
 
-Exit codes: `0` ok, `1` failure, `2` usage error, `3` missing dependency. `cindra network` contacts `deb.debian.org` unless you pass `--offline`.
+The report is saved locally and is not uploaded. Read it before sharing it; masking reduces exposure but cannot guarantee that every private detail has been removed.
 
 ## Known limitations
 
-- Secure Boot, ARM, an installer and persistent storage are not available in 0.3
-- The boot menu uses the default live-build look, no custom boot splash yet
-- The GTK themes are a thin layer over Arc; GTK4/libadwaita apps keep their own look
-- Only amd64 images are built
-- Hardware compatibility has not been tested broadly
+- The official image is amd64 only.
+- There is no graphical or command-line installer.
+- Persistent live storage is not configured.
+- Secure Boot is not supported.
+- Hardware compatibility varies, especially for Wi-Fi, graphics and audio devices.
+- GTK4 and libadwaita applications may not follow every GTK3 theme setting.
+- The live environment is temporary and is not intended as a replacement for an installed, maintained operating system.
 
-See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). When reporting a bug, attach the output of `cindra report` after reading it.
+These are documented product boundaries, not features that are implied to be available.
 
-## Build it yourself
+## Build from source
 
-You need Debian 13 (or Debian 12 with a newer `debootstrap`, or a Debian container), about 20 GB free space and `sudo`.
+Builds are intended for Debian 13 on an x86_64 host with internet access, root access through `sudo`, and approximately 20 GB free disk space.
 
-```
+```bash
 sudo apt install live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools git
 git clone https://github.com/danielwav1/CindraOS.git
 cd CindraOS
 chmod +x build.sh verify-iso.sh scripts/*.sh scripts/cindra tests/*.sh
+bash tests/run.sh
+./build.sh --check
 ./build.sh
 ```
 
-The ISO and its checksum end up in `out/`. No Debian machine? Run the **build-iso** workflow under the Actions tab. Details: [docs/BUILD.md](docs/BUILD.md). Tests: `bash tests/run.sh`, see [docs/TESTING.md](docs/TESTING.md).
+The ISO and checksum are written to `out/`. See [docs/BUILD.md](docs/BUILD.md) for the build process and [docs/TESTING.md](docs/TESTING.md) for automated and manual testing.
 
-## Project layout
+GitHub Actions runs the test suite, validates package names, builds the ISO, inspects its contents, boots it in QEMU and uploads the verified image as a workflow artifact.
+
+## Project structure
 
 ```
-build.sh  verify-iso.sh  VERSION
-assets/       logo, wallpaper, branding files
-desktop/      XFCE defaults, themes, shell setup, LightDM
-live/config/  live-build package list
-scripts/      cindra and build helpers
-docs/         build, testing, troubleshooting, live session
-tests/        test suite
+assets/       branding, logos, icons and wallpaper
+desktop/      XFCE defaults, themes, shell setup and LightDM
+live/config/  live-build configuration and package list
+scripts/      cindra utility and build helpers
+docs/         build, testing, component and troubleshooting docs
+tests/        automated tests and virtual-machine boot test
+.github/      GitHub Actions workflows
 ```
 
 ## Contributing
 
-Pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting changes. Please describe exactly what you tested; untested changes must be identified as such.
 
-## License
+## License and credits
 
-MIT for the CindraOS files, see [LICENSE](LICENSE). Debian packages in the image keep their own licenses.
+CindraOS project files are licensed under the MIT License. Debian packages and other bundled software retain their own licenses. CindraOS is built on Debian, the Linux kernel, XFCE, Arc and Papirus.
 
-## Credits
-
-Created by **Daniel.cindra**. Built on Debian, the Linux kernel, XFCE, the Arc theme and Papirus icons.
+Created by **Daniel.cindra**.
