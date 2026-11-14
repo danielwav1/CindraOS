@@ -1,4 +1,4 @@
-name: build-iso
+name: CindraOS Stable Build
 
 concurrency:
   group: cindraos-iso-${{ github.ref }}
@@ -7,8 +7,11 @@ concurrency:
 on:
   workflow_dispatch:
   push:
-    branches: ['main', 'cindra-rebrand']
+    branches: ['main', 'release/1.0-stable']
     tags: ['v*']
+
+permissions:
+  contents: read
 
 jobs:
   iso:
@@ -21,32 +24,38 @@ jobs:
         run: |
           sed -i 's/^Components: main$/Components: main non-free-firmware/' /etc/apt/sources.list.d/debian.sources
           apt-get update
-          apt-get install -y --no-install-recommends git ca-certificates live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools procps iproute2 pciutils
+          apt-get install -y --no-install-recommends git ca-certificates live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools procps iproute2 pciutils qemu-system-x86
           git config --global --add safe.directory '*'
       - uses: actions/checkout@v4
       - name: Render artwork
         run: python3 scripts/render-assets.py
-      - name: Run tests
+      - name: Run automated tests
         run: bash tests/run.sh
       - name: Check package names
-        continue-on-error: true
         run: bash scripts/check-packages.sh
       - name: Show source version
-        run: git log -1 --oneline && grep -n -e '--architecture' -e '--binary-image' build.sh
+        run: git log -1 --oneline && cat VERSION
       - name: Build ISO
         run: CINDRA_MIN_FREE_GB=8 bash build.sh
-      - name: Upload ISO
+      - name: Verify ISO contents
+        run: bash verify-iso.sh --deep out/CindraOS-$(tr -d '[:space:]' < VERSION)-live-amd64.iso
+      - name: Boot ISO in QEMU
+        run: bash tests/vm-boot.sh out/CindraOS-$(tr -d '[:space:]' < VERSION)-live-amd64.iso
+      - name: Upload verified ISO
         uses: actions/upload-artifact@v4
         with:
-          name: cindraos-iso
+          name: cindraos-1.0.0-stable-amd64
+          if-no-files-found: error
           path: |
             out/*.iso
             out/*.sha256
+            out/*.packages
+            out/*.contents
             out/*.log
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
+          name: cindraos-build-failure-log
           path: out/*.log
           if-no-files-found: ignore
