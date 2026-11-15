@@ -29,6 +29,10 @@ expect_eq "logo PNG 512" "512x512" "$(png_size "$ROOT/assets/logo/cindra-logo-51
 expect_eq "logo PNG 256" "256x256" "$(png_size "$ROOT/assets/logo/cindra-logo-256.png")"
 expect_eq "logo PNG 48" "48x48" "$(png_size "$ROOT/assets/logo/cindra-logo-48.png")"
 expect_file "wallpaper svg" "$ROOT/assets/wallpaper/cindra-default.svg"
+expect_file "CindraOS Plymouth theme" "$ROOT/boot/plymouth/cindra.plymouth"
+expect_file "CindraOS Plymouth script" "$ROOT/boot/plymouth/cindra.script"
+expect_file "Plymouth daemon configuration" "$ROOT/boot/plymouth/plymouthd.conf"
+expect_contains "Plymouth theme uses script module" "$(cat "$ROOT/boot/plymouth/cindra.plymouth")" "ModuleName=script"
 expect_eq "wallpaper PNG is 1920x1080" "1920x1080" "$(png_size "$ROOT/assets/wallpaper/cindra-default.png")"
 
 for f in os-release cindra-release issue issue.net; do

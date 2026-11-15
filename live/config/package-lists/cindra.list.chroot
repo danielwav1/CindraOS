@@ -1,4 +1,6 @@
 linux-image-amd64
+plymouth
+plymouth-themes
 live-boot
 live-config
 live-config-systemd

@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=CindraOS
+Description=CindraOS red and graphite boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/cindra
+ScriptFile=/usr/share/plymouth/themes/cindra/cindra.script

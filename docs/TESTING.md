@@ -11,6 +11,7 @@ After building an ISO, run the deep image check and QEMU boot test:
 ```bash
 bash verify-iso.sh --deep out/CindraOS-1.0.0-live-amd64.iso
 bash tests/vm-boot.sh out/CindraOS-1.0.0-live-amd64.iso
+bash tests/vm-secure-boot.sh out/CindraOS-1.0.0-live-amd64.iso
 ```
 
 The VM test attaches the ISO as a read-only CD-ROM and does not attach a writable virtual disk.
@@ -24,6 +25,7 @@ The VM test attaches the ISO as a read-only CD-ROM and does not attach a writabl
 | `test_cli.sh` | CLI commands, exit codes, missing dependencies, theme handling, report creation and identifier masking |
 | `test_iso.sh` | ISO verification when an image is available |
 | `vm-boot.sh` | Boots the built live image in QEMU and waits for the login prompt |
+| `vm-secure-boot.sh` | Boots the ISO through OVMF with Secure Boot keys enabled and waits for the live serial login prompt |
 
 The test runner treats missing summaries and unexpected test-script failures as failures. A skipped ISO test before an image exists is expected during the pre-build test stage.
 
@@ -49,6 +51,6 @@ QEMU testing does not replace testing on physical devices. Record the exact mach
 
 ## Not covered automatically
 
-The automated tests do not fully validate every GPU, Wi-Fi adapter, sound device, suspend/resume path, physical USB controller, or firmware implementation. They also do not establish that all optional CLI operations work correctly on every physical system.
+The automated tests do not fully validate every GPU, Wi-Fi adapter, sound device, suspend/resume path, physical USB controller, or firmware implementation. OVMF testing verifies the signed UEFI boot chain in a virtual firmware environment; physical firmware revocation databases and vendor implementations may differ. They also do not establish that all optional CLI operations work correctly on every physical system.
 
 When reporting a bug, include the device model and relevant error messages. You may attach `cindra report`, but inspect the report first because automated masking cannot guarantee removal of every personal detail.

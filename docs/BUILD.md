@@ -12,7 +12,7 @@ Install the build dependencies:
 
 ```bash
 sudo apt update
-sudo apt install live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools git
+sudo apt install live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools sbsigntool ovmf qemu-system-x86 git
 ```
 
 The build script checks the host, required tools, debootstrap suite support, live-build options and available disk space before building.
@@ -42,9 +42,10 @@ out/CindraOS-1.0.0-live-amd64.iso.sha256
 
 1. The staging step copies live-build configuration and CindraOS assets into the work directory.
 2. The XFWM4 window themes are generated.
-3. `lb config` configures a Debian Trixie amd64 hybrid ISO.
+3. `lb config` configures a Debian Trixie amd64 hybrid ISO and requires signed UEFI boot files with `--uefi-secure-boot enable`.
 4. `lb build` bootstraps Debian, installs the declared package list and runs the CindraOS chroot hook.
 5. The image is copied to `out/`, checksummed and verified.
+6. CI checks the shim, GRUB and kernel signatures, then boots the ISO in OVMF with Secure Boot enabled.
 
 The build script writes only to its configured work and output directories. It does not partition or format drives.
 
@@ -63,6 +64,7 @@ Boot testing in QEMU:
 ```bash
 sudo apt install qemu-system-x86
 bash tests/vm-boot.sh out/CindraOS-1.0.0-live-amd64.iso
+bash tests/vm-secure-boot.sh out/CindraOS-1.0.0-live-amd64.iso
 ```
 
 ## Options and environment

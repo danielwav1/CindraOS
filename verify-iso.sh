@@ -69,15 +69,25 @@ if grep -q 'initrd' <<< "$listing"; then ok "initrd present in /live"; else bad 
 
 if (( deep )); then
     command -v unsquashfs >/dev/null 2>&1 || { echo "verify-iso: --deep needs unsquashfs (squashfs-tools)" >&2; exit 3; }
+    for tool in mcopy sbverify; do
+        command -v "$tool" >/dev/null 2>&1 || { echo "verify-iso: --deep needs $tool" >&2; exit 3; }
+    done
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
     if xorriso -osirrox on -indev "$iso" -extract /live/filesystem.squashfs "$tmp/fs.squashfs" >/dev/null 2>&1; then
         osr=$(unsquashfs -cat "$tmp/fs.squashfs" usr/lib/os-release 2>/dev/null || true)
         if grep -q '^ID=cindra' <<< "$osr"; then ok "root fs: os-release identifies CindraOS"; else bad "root fs: os-release is not CindraOS"; fi
         files=$(unsquashfs -l "$tmp/fs.squashfs" 2>/dev/null || true)
-        for f in usr/local/bin/cindra etc/cindra-release usr/share/backgrounds/cindra/cindra-default.png usr/share/themes/Cindra-Dark/gtk-3.0/gtk.css etc/lightdm/lightdm.conf.d/50-cindra.conf; do
+        for f in usr/local/bin/cindra etc/cindra-release usr/share/backgrounds/cindra/cindra-default.png usr/share/themes/Cindra-Dark/gtk-3.0/gtk.css etc/lightdm/lightdm.conf.d/50-cindra.conf usr/share/plymouth/themes/cindra/cindra.plymouth usr/share/plymouth/themes/cindra/cindra.script usr/share/plymouth/themes/cindra/cindra-logo.png etc/plymouth/plymouthd.conf; do
             if grep -q "squashfs-root/$f\$" <<< "$files"; then ok "root fs: /$f"; else bad "root fs: /$f missing"; fi
         done
+        if xorriso -osirrox on -indev "$iso" -extract /boot/grub/efi.img "$tmp/efi.img" >/dev/null 2>&1; then
+            if mcopy -i "$tmp/efi.img" ::/EFI/BOOT/BOOTX64.EFI "$tmp/bootx64.efi" >/dev/null 2>&1 && sbverify --list "$tmp/bootx64.efi" >/dev/null 2>&1; then ok "Secure Boot: Microsoft-signed shim is present"; else bad "Secure Boot: signed shim is missing or invalid"; fi
+            if mcopy -i "$tmp/efi.img" ::/EFI/BOOT/GRUBX64.EFI "$tmp/grubx64.efi" >/dev/null 2>&1 && sbverify --list "$tmp/grubx64.efi" >/dev/null 2>&1; then ok "Secure Boot: Debian-signed GRUB is present"; else bad "Secure Boot: signed GRUB is missing or invalid"; fi
+        else
+            bad "Secure Boot: EFI boot image /boot/grub/efi.img is missing"
+        fi
+        if xorriso -osirrox on -indev "$iso" -extract /live/vmlinuz "$tmp/vmlinuz" >/dev/null 2>&1 && sbverify --list "$tmp/vmlinuz" >/dev/null 2>&1; then ok "Secure Boot: signed Linux kernel is present"; else bad "Secure Boot: signed Linux kernel is missing or invalid"; fi
         for forbidden in calamares debian-installer; do
             if grep -q "usr/bin/$forbidden\$\|usr/share/$forbidden\$" <<< "$files"; then bad "root fs: installer component '$forbidden' present"; else ok "root fs: no $forbidden"; fi
         done

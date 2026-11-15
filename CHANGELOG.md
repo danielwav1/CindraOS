@@ -2,17 +2,10 @@
 
 ## 1.0.0 — Stable Live Edition
 
-The first stable CindraOS release, based on Debian 13 Trixie.
-
-- Establishes CindraOS 1.0.0 system identity and stable release metadata
-- Documents the supported amd64 live-system scope and its limitations
-- Clarifies that CindraOS is a live environment, not an installer
-- Adds stricter CI behavior: package-name validation is mandatory
-- Extends CI to inspect the built ISO filesystem and boot the image in QEMU
-- Makes the test runner fail if a test script exits unexpectedly or omits its summary
-- Reworks the README and build/testing documentation around the stable release
-
-The stable release artifact is published only after the required automated checks and ISO build complete successfully. Real-hardware coverage remains limited and is not implied by the stable label.
+- Adds a branded CindraOS Plymouth boot splash.
+- Enables UEFI Secure Boot using Debian-signed GRUB and Microsoft-signed shim.
+- Adds ISO-level signature verification and an OVMF Secure Boot boot test.
+- Keeps the BIOS/UEFI hybrid live image, XFCE desktop and existing `cindra` utility.
 
 ## 0.4.0 — Experimental
 

@@ -70,13 +70,14 @@ LB_ARGS=(
     --linux-flavours "$ARCH"
     --memtest none
     --checksums sha256
+    --uefi-secure-boot enable
     --security true
     --updates true
     --iso-application "CindraOS"
     --iso-publisher "CindraOS Project; https://danielwav1.github.io/CindraOS"
     --iso-volume "CINDRAOS_${VERSION//./_}"
     --image-name "cindraos-${VERSION}-live"
-    --bootappend-live "boot=live components quiet live-config.username=cindra live-config.hostname=cindraos live-config.locales=${LOCALE} live-config.keyboard-layouts=${KEYMAP} live-config.user-default-groups=audio,cdrom,dip,floppy,video,plugdev,netdev,scanner,bluetooth,lpadmin,sudo,adm,systemd-journal modprobe.blacklist=pnd2_edac"
+    --bootappend-live "boot=live components quiet splash console=tty0 console=ttyS0,115200n8 live-config.username=cindra live-config.hostname=cindraos live-config.locales=${LOCALE} live-config.keyboard-layouts=${KEYMAP} live-config.user-default-groups=audio,cdrom,dip,floppy,video,plugdev,netdev,scanner,bluetooth,lpadmin,sudo,adm,systemd-journal modprobe.blacklist=pnd2_edac"
 )
 
 if [[ -n ${CINDRA_MIRROR:-} ]]; then
@@ -208,6 +209,10 @@ stage() {
     done
     put "$ROOT/assets/wallpaper/cindra-default.png" "$inc/usr/share/backgrounds/cindra/cindra-default.png" 644
     put "$ROOT/assets/wallpaper/cindra-default.svg" "$inc/usr/share/backgrounds/cindra/cindra-default.svg" 644
+    put "$ROOT/boot/plymouth/cindra.plymouth" "$inc/usr/share/plymouth/themes/cindra/cindra.plymouth" 644
+    put "$ROOT/boot/plymouth/cindra.script" "$inc/usr/share/plymouth/themes/cindra/cindra.script" 644
+    put "$ROOT/assets/logo/cindra-logo-256.png" "$inc/usr/share/plymouth/themes/cindra/cindra-logo.png" 644
+    put "$ROOT/boot/plymouth/plymouthd.conf" "$inc/etc/plymouth/plymouthd.conf" 644
 
     put_tree "$ROOT/assets/icons/Cindra-Icons" "$inc/usr/share/icons/Cindra-Icons"
     put_tree "$ROOT/desktop/xfce/xdg" "$inc/etc/xdg"

@@ -26,7 +26,7 @@ expect_eq "VERSION file matches os-release" "$(tr -d '[:space:]' < "$ROOT/VERSIO
 list=$ROOT/live/config/package-lists/cindra.list.chroot
 expect_eq "package list has no duplicates" 0 "$(sort "$list" | uniq -d | wc -l)"
 expect_eq "package list has no blank lines" 0 "$(grep -c '^[[:space:]]*$' "$list")"
-for p in xfce4 lightdm network-manager sudo live-boot live-config linux-image-amd64; do
+for p in xfce4 lightdm network-manager sudo live-boot live-config linux-image-amd64 plymouth plymouth-themes; do
     if grep -qx "$p" "$list"; then pass "package list contains $p"; else fail "package list lacks $p"; fi
 done
 for p in calamares debian-installer-launcher live-installer ssh openssh-server telnetd; do
@@ -35,6 +35,12 @@ done
 
 expect_not_contains "no installer in boot parameters" "$(grep -- '--bootappend-live' "$ROOT/build.sh")" "install"
 expect_contains "debian installer disabled" "$(cat "$ROOT/build.sh")" "--debian-installer none"
+expect_contains "UEFI Secure Boot is required" "$(cat "$ROOT/build.sh")" "--uefi-secure-boot enable"
+expect_contains "Plymouth splash is enabled" "$(grep -- '--bootappend-live' "$ROOT/build.sh")" "splash"
+expect_file "CindraOS Plymouth theme" "$ROOT/boot/plymouth/cindra.plymouth"
+expect_file "CindraOS Plymouth script" "$ROOT/boot/plymouth/cindra.script"
+expect_file "Plymouth daemon configuration" "$ROOT/boot/plymouth/plymouthd.conf"
+expect_contains "Plymouth theme selects CindraOS" "$(cat "$ROOT/boot/plymouth/plymouthd.conf")" "Theme=cindra"
 expect_not_contains "build script never calls a partitioning tool" "$(grep -vE '^\s*#' "$ROOT/build.sh")" "parted"
 expect_not_contains "build script never formats" "$(cat "$ROOT/build.sh")" "mkfs"
 

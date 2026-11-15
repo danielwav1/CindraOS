@@ -15,7 +15,9 @@ This is the first stable release of the CindraOS-branded live system. Stable des
 ## Features
 
 - Debian 13 Trixie base and Linux kernel from Debian
-- Hybrid amd64 live ISO for BIOS and UEFI systems
+- Hybrid amd64 live ISO for legacy BIOS and UEFI systems
+- Debian-signed GRUB and Microsoft-signed shim for UEFI Secure Boot
+- CindraOS red-and-graphite Plymouth boot splash
 - XFCE desktop with Cindra-Dark and Cindra-Light themes
 - Cindra wallpaper, logo, application icons, panel and terminal styling
 - LightDM desktop login
@@ -34,7 +36,7 @@ Most operating-system components are Debian packages. CindraOS provides the bran
 | RAM | 2 GB minimum; 4 GB or more recommended |
 | USB drive | 8 GB or larger |
 | Firmware | Legacy BIOS or UEFI |
-| Secure Boot | Not supported; disable it before booting |
+| Secure Boot | Supported on UEFI systems with standard Microsoft/Debian Secure Boot trust databases |
 | Architecture | amd64 only |
 
 Wi-Fi support depends on the hardware and available firmware. The included firmware covers a selection of common Intel, Realtek and Atheros devices, not every adapter.
@@ -68,7 +70,7 @@ Replace `/dev/sdX` with the whole USB device, not a partition. Never copy the ex
 
 1. Connect the USB drive and open the computer's boot menu.
 2. Select the USB device in BIOS or UEFI mode.
-3. Disable Secure Boot if the firmware blocks the image.
+3. Select the UEFI USB entry. Secure Boot can remain enabled on supported firmware.
 4. The live desktop logs in automatically as `cindra`.
 
 The live account uses the public password `cindra1` for local administrative prompts. This is a shared live-session credential, not a secure personal account. Do not use the live environment for sensitive work or store private credentials in it.
@@ -114,7 +116,7 @@ The report is saved locally and is not uploaded. Read it before sharing it; mask
 - The official image is amd64 only.
 - There is no graphical or command-line installer.
 - Persistent live storage is not configured.
-- Secure Boot is not supported.
+- Secure Boot is supported through Debian-signed GRUB and Microsoft-signed shim; firmware revocation databases and vendor implementations can still affect compatibility.
 - Hardware compatibility varies, especially for Wi-Fi, graphics and audio devices.
 - GTK4 and libadwaita applications may not follow every GTK3 theme setting.
 - The live environment is temporary and is not intended as a replacement for an installed, maintained operating system.
