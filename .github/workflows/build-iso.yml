@@ -25,7 +25,7 @@ jobs:
         run: |
           sed -i 's/^Components: main$/Components: main non-free-firmware/' /etc/apt/sources.list.d/debian.sources
           apt-get update
-          apt-get install -y --no-install-recommends git ca-certificates live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools procps iproute2 pciutils qemu-system-x86 ovmf sbsigntool gh initramfs-tools-core
+          apt-get install -y --no-install-recommends git ca-certificates live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools procps iproute2 pciutils qemu-system-x86 ovmf sbsigntool initramfs-tools-core
           git config --global --add safe.directory '*'
       - uses: actions/checkout@v4
       - name: Render artwork
@@ -55,17 +55,6 @@ jobs:
             out/*.packages
             out/*.contents
             out/*.log
-      - name: Publish CindraOS 1.0.0 Stable release
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && contains(github.event.head_commit.message, 'Release CindraOS 1.0.0')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create v1.0.0 \\
-            out/CindraOS-1.0.0-live-amd64.iso \\
-            out/CindraOS-1.0.0-live-amd64.iso.sha256 \\
-            --target "$GITHUB_SHA" \\
-            --title "CindraOS 1.0.0 Stable" \\
-            --notes-file docs/RELEASE-NOTES.md
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -73,3 +62,25 @@ jobs:
           name: cindraos-build-failure-log
           path: out/*.log
           if-no-files-found: ignore
+
+  publish:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && contains(github.event.head_commit.message, 'Release CindraOS 1.0.0')
+    needs: iso
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: cindraos-1.0.0-stable-amd64
+          path: out
+      - name: Publish CindraOS 1.0.0 Stable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1.0.0 \
+            out/CindraOS-1.0.0-live-amd64.iso \
+            out/CindraOS-1.0.0-live-amd64.iso.sha256 \
+            --target "$GITHUB_SHA" \
+            --title "CindraOS 1.0.0 Stable" \
+            --notes-file docs/RELEASE-NOTES.md
