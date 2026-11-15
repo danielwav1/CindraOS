@@ -16,6 +16,7 @@ permissions:
 jobs:
   iso:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     container:
       image: debian:trixie
       options: --privileged
