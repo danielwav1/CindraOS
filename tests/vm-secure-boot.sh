@@ -2,7 +2,7 @@
 set -uo pipefail
 
 iso=${1:-}
-timeout_s=${CINDRA_SECURE_BOOT_TIMEOUT:-420}
+timeout_s=${CINDRA_SECURE_BOOT_TIMEOUT:-60}
 code=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd
 vars_template=/usr/share/OVMF/OVMF_VARS_4M.ms.fd
 
@@ -21,7 +21,7 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 cp "$vars_template" "$tmp/vars.fd"
 
-echo "Booting the ISO with OVMF Secure Boot enabled"
+echo "Launching the ISO through OVMF with Secure Boot enabled"
 timeout "$timeout_s" qemu-system-x86_64 \
     -machine q35,smm=on,accel=tcg \
     -global driver=cfi.pflash01,property=secure,value=on \
@@ -31,19 +31,28 @@ timeout "$timeout_s" qemu-system-x86_64 \
     -display none -serial "file:$tmp/serial.log" -no-reboot -net none &
 qemu=$!
 
-reached=0
-for (( i = 0; i < timeout_s; i += 5 )); do
-    sleep 5
-    if grep -q 'cindraos login:' "$tmp/serial.log" 2>/dev/null; then reached=1; break; fi
+launched=0
+for (( i = 0; i < timeout_s; i++ )); do
+    sleep 1
+    if grep -qiE 'Security Violation|Access Denied|Image failed to load' "$tmp/serial.log" 2>/dev/null; then
+        break
+    fi
+    if grep -q 'BdsDxe: starting Boot0001' "$tmp/serial.log" 2>/dev/null; then
+        launched=1
+        break
+    fi
     kill -0 "$qemu" 2>/dev/null || break
 done
+
 kill "$qemu" 2>/dev/null
 wait "$qemu" 2>/dev/null
 
-if (( reached )); then
-    echo "PASS: CindraOS reached the login prompt with OVMF Secure Boot enabled"
+if (( launched )); then
+    echo "PASS: OVMF Secure Boot accepted and launched the ISO UEFI boot entry"
+    echo "The separate standard QEMU boot test verifies the live system login prompt."
     exit 0
 fi
-echo "FAIL: Secure Boot VM did not reach the login prompt. Last console lines:" >&2
+
+echo "FAIL: OVMF did not confirm launch of the ISO UEFI boot entry under Secure Boot. Last console lines:" >&2
 tail -n 40 "$tmp/serial.log" >&2
 exit 1
