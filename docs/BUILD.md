@@ -45,7 +45,7 @@ out/CindraOS-1.0.0-live-amd64.iso.sha256
 3. `lb config` configures a Debian Trixie amd64 hybrid ISO and requires signed UEFI boot files with `--uefi-secure-boot enable`.
 4. `lb build` bootstraps Debian, installs the declared package list and runs the CindraOS chroot hook.
 5. The image is copied to `out/`, checksummed and verified.
-6. CI checks the shim, GRUB and kernel signatures, then boots the ISO in OVMF with Secure Boot enabled.
+6. CI boots the image in standard QEMU and separately checks that OVMF with Secure Boot enabled accepts and launches the ISO's UEFI boot entry.
 
 The build script writes only to its configured work and output directories. It does not partition or format drives.
 
@@ -62,10 +62,12 @@ The deep check extracts the live SquashFS temporarily and verifies CindraOS iden
 Boot testing in QEMU:
 
 ```bash
-sudo apt install qemu-system-x86
+sudo apt install qemu-system-x86 ovmf sbsigntool
 bash tests/vm-boot.sh out/CindraOS-1.0.0-live-amd64.iso
 bash tests/vm-secure-boot.sh out/CindraOS-1.0.0-live-amd64.iso
 ```
+
+The standard VM test waits for the live login prompt. The Secure Boot VM test verifies that the Secure Boot-enabled OVMF firmware launches the ISO's UEFI boot entry and rejects a firmware security violation. These are separate checks; they do not currently prove the entire live-session boot chain in one Secure Boot-enabled VM run.
 
 ## Options and environment
 
@@ -94,6 +96,7 @@ The `.github/workflows/build-iso.yml` workflow runs on pushes to `main` and `rel
 3. Validates package names; this step is required to pass.
 4. Builds the ISO and performs deep filesystem verification.
 5. Boots the image in QEMU and waits for the live login prompt.
-6. Uploads the ISO, checksum, manifests and build log as an artifact.
+6. Starts the ISO's UEFI boot entry with OVMF Secure Boot enabled.
+7. Uploads the ISO, checksum, manifests and build log as an artifact.
 
-A successful workflow confirms the automated checks and QEMU boot test. It does not prove compatibility with every physical computer.
+A successful workflow confirms these automated checks. It does not prove compatibility with every physical computer or establish a single end-to-end Secure Boot login test.
