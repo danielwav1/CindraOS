@@ -241,11 +241,11 @@ build_image() {
     local sde
     sde=$(source_date_epoch)
     msg "Configuring live-build (suite $SUITE, $ARCH)"
-    ( cd "$WORK" && as_root env SOURCE_DATE_EPOCH="$sde" lb config "${LB_ARGS[@]}" ) 2>&1 | tee -a "$LOG"
+    ( cd "$WORK" && as_root env DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true SOURCE_DATE_EPOCH="$sde" lb config "${LB_ARGS[@]}" ) 2>&1 | tee -a "$LOG"
 
     msg "Building the image, this takes a while"
     note "log: $LOG"
-    ( cd "$WORK" && as_root env SOURCE_DATE_EPOCH="$sde" lb build ) 2>&1 | tee -a "$LOG"
+    ( cd "$WORK" && as_root env DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true SOURCE_DATE_EPOCH="$sde" lb build ) 2>&1 | tee -a "$LOG"
 }
 
 collect() {
