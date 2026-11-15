@@ -24,7 +24,7 @@ jobs:
         run: |
           sed -i 's/^Components: main$/Components: main non-free-firmware/' /etc/apt/sources.list.d/debian.sources
           apt-get update
-          apt-get install -y --no-install-recommends git ca-certificates live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools procps iproute2 pciutils qemu-system-x86 ovmf sbsigntool gh
+          apt-get install -y --no-install-recommends git ca-certificates live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools procps iproute2 pciutils qemu-system-x86 ovmf sbsigntool gh initramfs-tools-core
           git config --global --add safe.directory '*'
       - uses: actions/checkout@v4
       - name: Render artwork

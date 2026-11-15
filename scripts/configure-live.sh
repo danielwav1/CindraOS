@@ -10,6 +10,14 @@ for loc in en_US.UTF-8 de_DE.UTF-8; do
 done
 locale-gen
 
+if command -v plymouth-set-default-theme >/dev/null 2>&1 && command -v update-initramfs >/dev/null 2>&1; then
+    plymouth-set-default-theme cindra
+    update-initramfs -u -k all
+else
+    echo "configure-live: Plymouth or initramfs tools are missing" >&2
+    exit 1
+fi
+
 xfconf_dir=/etc/xdg/xfce4/xfconf/xfce-perchannel-xml
 mkdir -p "$xfconf_dir"
 {

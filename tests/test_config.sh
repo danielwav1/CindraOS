@@ -50,6 +50,8 @@ expect_contains "password unit sets the cindra user password" "$unit" "cindra:ci
 expect_contains "password unit creates the user if missing" "$unit" "adduser"
 expect_contains "pnd2_edac is blacklisted at boot" "$(cat "$ROOT/build.sh")" "modprobe.blacklist=pnd2_edac"
 expect_contains "hook enables the password unit" "$(cat "$ROOT/scripts/configure-live.sh")" "systemctl enable cindra-password.service"
+expect_contains "live hook selects the CindraOS Plymouth theme" "$(cat "$ROOT/scripts/configure-live.sh")" "plymouth-set-default-theme cindra"
+expect_contains "live hook rebuilds the initramfs after theme selection" "$(cat "$ROOT/scripts/configure-live.sh")" "update-initramfs -u -k all"
 expect_contains "build stages the password unit" "$(cat "$ROOT/build.sh")" "cindra-password.service"
 
 lm=$(cat "$ROOT/desktop/lightdm/50-cindra.conf")

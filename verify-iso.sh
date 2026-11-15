@@ -69,7 +69,7 @@ if grep -q 'initrd' <<< "$listing"; then ok "initrd present in /live"; else bad 
 
 if (( deep )); then
     command -v unsquashfs >/dev/null 2>&1 || { echo "verify-iso: --deep needs unsquashfs (squashfs-tools)" >&2; exit 3; }
-    for tool in mcopy sbverify; do
+    for tool in mcopy sbverify lsinitramfs; do
         command -v "$tool" >/dev/null 2>&1 || { echo "verify-iso: --deep needs $tool" >&2; exit 3; }
     done
     tmp=$(mktemp -d)
@@ -88,6 +88,14 @@ if (( deep )); then
             bad "Secure Boot: EFI boot image /boot/grub/efi.img is missing"
         fi
         if xorriso -osirrox on -indev "$iso" -extract /live/vmlinuz "$tmp/vmlinuz" >/dev/null 2>&1 && sbverify --list "$tmp/vmlinuz" >/dev/null 2>&1; then ok "Secure Boot: signed Linux kernel is present"; else bad "Secure Boot: signed Linux kernel is missing or invalid"; fi
+        if xorriso -osirrox on -indev "$iso" -extract /live/initrd.img "$tmp/initrd.img" >/dev/null 2>&1; then
+            initrd_files=$(lsinitramfs "$tmp/initrd.img" 2>/dev/null || true)
+            for f in usr/share/plymouth/themes/cindra/cindra.plymouth usr/share/plymouth/themes/cindra/cindra.script usr/share/plymouth/themes/cindra/cindra-logo.png etc/plymouth/plymouthd.conf; do
+                if grep -Fq "$f" <<< "$initrd_files"; then ok "initramfs: /$f"; else bad "initramfs: /$f missing"; fi
+            done
+        else
+            bad "initramfs: could not extract /live/initrd.img"
+        fi
         for forbidden in calamares debian-installer; do
             if grep -q "usr/bin/$forbidden\$\|usr/share/$forbidden\$" <<< "$files"; then bad "root fs: installer component '$forbidden' present"; else ok "root fs: no $forbidden"; fi
         done

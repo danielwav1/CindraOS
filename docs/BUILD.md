@@ -12,7 +12,7 @@ Install the build dependencies:
 
 ```bash
 sudo apt update
-sudo apt install live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools sbsigntool ovmf qemu-system-x86 git
+sudo apt install live-build debootstrap squashfs-tools xorriso python3 python3-pil python3-numpy file mtools dosfstools sbsigntool ovmf qemu-system-x86 initramfs-tools-core git
 ```
 
 The build script checks the host, required tools, debootstrap suite support, live-build options and available disk space before building.
